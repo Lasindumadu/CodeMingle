@@ -3,6 +3,9 @@ package com.example.codemingle_backend.model;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.Lob;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -35,7 +38,9 @@ public class Question {
     @JsonIgnore
     private Quiz quiz;
 
-    @Column(name = "question_text", nullable = false, columnDefinition = "TEXT")
+    @Lob
+    @JdbcTypeCode(SqlTypes.CLOB)
+    @Column(name = "question_text", nullable = false)
     private String questionText;
 
     @Column(name = "option_a", nullable = false)

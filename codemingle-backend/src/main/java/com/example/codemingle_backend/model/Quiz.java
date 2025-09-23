@@ -31,9 +31,8 @@ public class Quiz {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long quizId;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "lesson_id", nullable = false)
-    @JsonIgnore
     private Lesson lesson;
 
     @Column(name = "title", nullable = false)

@@ -32,9 +32,8 @@ public class Comment {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "lesson_id", nullable = false)
-    @JsonIgnore
     private Lesson lesson;
 
     @Column(name = "content", nullable = false)

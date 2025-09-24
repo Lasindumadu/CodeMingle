@@ -1,0 +1,5 @@
+- [x] Enhance the detailed course view in ListCourseComponent.js with icons, sections, and better layout
+- [x] Add CSS styles for .course-content.card in ListComponents.css for attractive design
+- [x] Change the detailed view to a modal popup in ListCourseComponent.js
+- [x] Update CSS if needed for modal styling
+- [x] Test the modal functionality

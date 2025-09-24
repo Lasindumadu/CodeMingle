@@ -53,6 +53,14 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 
+    // build get user by username REST API
+    @GetMapping("/username/{username}")
+    public ResponseEntity<User> getUserByUsername(@PathVariable String username){
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not exist with username:" + username));
+        return ResponseEntity.ok(user);
+    }
+
     // build update user REST API
     @PutMapping("{id}")
     public ResponseEntity<User> updateUser(@PathVariable long id,@RequestBody User userDetails) {

@@ -25,4 +25,7 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
 
     @Query("SELECT COUNT(e) > 0 FROM Enrollment e WHERE e.user = :user AND e.course = :course AND e.enrollmentId != :enrollmentId")
     boolean existsByUserAndCourseAndEnrollmentIdNot(@Param("user") User user, @Param("course") Course course, @Param("enrollmentId") Long enrollmentId);
+
+    @Query("SELECT e FROM Enrollment e LEFT JOIN FETCH e.user LEFT JOIN FETCH e.course LEFT JOIN FETCH e.lesson WHERE e.user = :user")
+    List<Enrollment> findByUser(@Param("user") User user);
 }

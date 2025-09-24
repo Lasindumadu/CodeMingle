@@ -168,4 +168,39 @@ public class EnrollmentController {
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
 
     }
+
+    // Check if user is enrolled in a course
+    @GetMapping("/check/{userId}/{courseId}")
+    public ResponseEntity<Boolean> checkUserEnrollment(@PathVariable Long userId, @PathVariable Long courseId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not exist with id: " + userId));
+        
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new ResourceNotFoundException("Course not exist with id: " + courseId));
+        
+        boolean isEnrolled = enrollmentRepository.existsByUserAndCourse(user, course);
+        return ResponseEntity.ok(isEnrolled);
+    }
+
+    // Get enrollments for a specific user
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<EnrollmentDTO>> getUserEnrollments(@PathVariable Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not exist with id: " + userId));
+        
+        List<Enrollment> enrollments = enrollmentRepository.findByUser(user);
+        List<EnrollmentDTO> enrollmentDTOs = enrollments.stream()
+                .map(enrollment -> new EnrollmentDTO(
+                        enrollment.getEnrollmentId(),
+                        enrollment.getUser().getUserId(),
+                        enrollment.getUser().getUsername(),
+                        enrollment.getCourse().getCourseId(),
+                        enrollment.getCourse().getTitle(),
+                        enrollment.getLesson() != null ? enrollment.getLesson().getLessonId() : null,
+                        enrollment.getEnrollmentDate().toLocalDate().toString()
+                ))
+                .collect(Collectors.toList());
+        
+        return ResponseEntity.ok(enrollmentDTOs);
+    }
 }

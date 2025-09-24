@@ -1,0 +1,3 @@
+- [ ] Soften contrast in left navigation bar by adjusting sidebar background and text colors in ListLessonComponent.css
+- [ ] Reduce contrast in lesson page title by modifying .list-title in ListComponents.css
+- [ ] Ensure lesson card container matches other containers (verify styling consistency)

@@ -1,0 +1,38 @@
+# Logs
+*.log
+hs_err_pid*.log
+replay_pid*.log
+
+# Build directories
+target/
+node_modules/
+build/
+dist/
+
+# IDE files
+.vscode/
+.idea/
+*.iml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Database files (if not needed in repo)
+*.db
+*.sqlite
+
+# Other
+*.class
+*.jar

@@ -17,6 +17,8 @@ CREATE TABLE IF NOT EXISTS users (
     last_login TIMESTAMP NULL,
     login_attempts INT DEFAULT 0,
     lockout_until TIMESTAMP NULL,
+    profile_views INT DEFAULT 0,
+    rating DOUBLE DEFAULT 0.0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_users_username (username),

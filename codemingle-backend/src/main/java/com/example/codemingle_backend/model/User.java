@@ -44,6 +44,12 @@ public class User {
     @Column(name = "role", nullable = false)
     private String role;
 
+    @Column(name = "profile_views", nullable = false, columnDefinition = "INT DEFAULT 0")
+    private Integer profileViews = 0;
+
+    @Column(name = "rating", nullable = false, columnDefinition = "DOUBLE DEFAULT 0.0")
+    private Double rating = 0.0;
+
     // Relationships
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore

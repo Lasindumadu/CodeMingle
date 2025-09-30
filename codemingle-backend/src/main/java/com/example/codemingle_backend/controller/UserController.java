@@ -88,6 +88,40 @@ public class UserController {
         return ResponseEntity.ok(updateUser);
     }
 
+    // build increment profile views REST API
+    @PutMapping("{id}/increment-views")
+    public ResponseEntity<User> incrementProfileViews(@PathVariable long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not exist with id: " + id));
+
+        user.setProfileViews(user.getProfileViews() + 1);
+        userRepository.save(user);
+
+        return ResponseEntity.ok(user);
+    }
+
+    // build calculate rating REST API
+    @PutMapping("{id}/calculate-rating")
+    public ResponseEntity<User> calculateRating(@PathVariable long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not exist with id: " + id));
+
+        // Calculate rating based on user activity
+        // For now, base it on number of enrollments and comments
+        int enrollmentCount = user.getEnrollments() != null ? user.getEnrollments().size() : 0;
+        int commentCount = user.getComments() != null ? user.getComments().size() : 0;
+
+        // Simple rating calculation: base rating + bonus for activity
+        double baseRating = 3.0; // Default rating
+        double activityBonus = Math.min((enrollmentCount + commentCount) * 0.1, 2.0); // Max 2.0 bonus
+        double calculatedRating = Math.min(baseRating + activityBonus, 5.0); // Max 5.0
+
+        user.setRating(calculatedRating);
+        userRepository.save(user);
+
+        return ResponseEntity.ok(user);
+    }
+
     // build delete user REST API
     @DeleteMapping("{id}")
     public ResponseEntity<HttpStatus> deleteUser(@PathVariable long id){

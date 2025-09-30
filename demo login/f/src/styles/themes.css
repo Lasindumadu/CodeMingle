@@ -350,7 +350,7 @@ small {
 .dark-theme .btn-outline-primary:hover {
   background-color: var(--primary-color);
   border-color: var(--primary-color);
-  color: var(--bg-primary);
+  color: #ffffff;
 }
 
 .dark-theme .btn-outline-secondary {

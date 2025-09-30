@@ -108,7 +108,12 @@
 .profile-card .btn-outline-warning:hover {
   background-color: var(--warning-color) !important;
   border-color: var(--warning-color) !important;
-  color: var(--bg-primary) !important;
+  color: #212529 !important;
+}
+
+/* Dark theme button styling */
+.dark-theme .profile-card .btn-outline-warning:hover {
+  color: #ffffff !important;
 }
 
 .profile-card .btn-warning {
@@ -191,6 +196,11 @@
 /* Small text styling */
 .profile-card small {
   color: var(--text-muted) !important;
+}
+
+/* Dark theme small text styling */
+.dark-theme .profile-card small {
+  color: #adb5bd !important;
 }
 
 /* Enhanced hover effects for dark theme */

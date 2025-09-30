@@ -1,4 +1,4 @@
- /* Enhanced card style for list components with gradients, animations, and improved attractiveness */
+/* Enhanced card style for list components with gradients, animations, and improved attractiveness */
 .list-page-container, .lesson-page-container {
   min-height: 100vh;
   background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
@@ -2324,7 +2324,7 @@
 }
 
 .dark-theme .form-field-help {
-  color: var(--text-muted);
+  color: #adb5bd;
 }
 
 .dark-theme .form-field-help i {

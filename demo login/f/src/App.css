@@ -1,4 +1,0 @@
-/* Add padding-top to container to offset fixed header height */
-.container {
-  padding-top: 40px; /* Adjust this value to match the header height */
-}

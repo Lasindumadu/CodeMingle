@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { Modal } from 'react-bootstrap'
 import CourseService from '../services/CourseService'
+import EnrollmentService from '../services/EnrollmentService'
+import UserService from '../services/UserService'
+import { useAuth } from '../context/AuthContext'
+import AuthService from '../services/AuthService'
 import './ListComponents.css'
 
 import LessonService from '../services/LessonService'
@@ -19,10 +23,37 @@ const ListCourseComponent = () => {
     const urlSearchTerm = searchParams.get('search') || ''
     const [sortField, setSortField] = useState('courseId')
     const [sortOrder, setSortOrder] = useState('asc')
+    const [enrollmentStatus, setEnrollmentStatus] = useState({})
+    const [enrolling, setEnrolling] = useState({})
+    const [showSuccessToast, setShowSuccessToast] = useState(false)
+    const [showErrorToast, setShowErrorToast] = useState(false)
+    const [toastMessage, setToastMessage] = useState('')
+    const [currentUser, setCurrentUser] = useState(null)
+    const { user, isAuthenticated } = useAuth()
 
 
     useEffect(() => {
         getAllCourses()
+        initializeUser()
+    }, [])
+
+    useEffect(() => {
+        if (AuthService.isAuthenticated() && currentUser && courses.length > 0) {
+            checkEnrollmentStatus()
+        }
+    }, [currentUser, courses])
+
+    // Watch for authentication changes
+    useEffect(() => {
+        const handleAuthChange = () => {
+            initializeUser()
+        }
+        
+        window.addEventListener('authChanged', handleAuthChange)
+        
+        return () => {
+            window.removeEventListener('authChanged', handleAuthChange)
+        }
     }, [])
 
     useEffect(() => {
@@ -48,6 +79,26 @@ const ListCourseComponent = () => {
             setSelectedCourse(null)
         }
     }, [selectedCourseId, courses])
+
+    const initializeUser = async () => {
+        try {
+            const username = AuthService.getUsername()
+            if (!username) {
+                setCurrentUser(null)
+                setEnrollmentStatus({})
+                return
+            }
+
+            // Get user details by username from backend
+            const userResponse = await UserService.getUserByUsername(username)
+            const userData = userResponse.data
+            setCurrentUser(userData)
+        } catch (error) {
+            console.error('Error initializing user:', error)
+            setCurrentUser(null)
+            setEnrollmentStatus({})
+        }
+    }
 
     const getAllCourses = () => {
         CourseService.getAllCourses()
@@ -158,6 +209,71 @@ const ListCourseComponent = () => {
         });
     }
 
+    const checkEnrollmentStatus = async () => {
+        const userId = currentUser?.userId;
+        if (!currentUser || !userId) return;
+        
+        const statusPromises = courses.map(async (course) => {
+            try {
+                const response = await EnrollmentService.checkUserEnrollment(userId, course.courseId);
+                return { courseId: course.courseId, isEnrolled: response.data };
+            } catch (error) {
+                console.error(`Error checking enrollment for course ${course.courseId}:`, error);
+                return { courseId: course.courseId, isEnrolled: false };
+            }
+        });
+
+        const results = await Promise.all(statusPromises);
+        const statusMap = {};
+        results.forEach(result => {
+            statusMap[result.courseId] = result.isEnrolled;
+        });
+        setEnrollmentStatus(statusMap);
+    }
+
+    const showToast = (message, isSuccess = true) => {
+        setToastMessage(message);
+        if (isSuccess) {
+            setShowSuccessToast(true);
+            setTimeout(() => setShowSuccessToast(false), 4000);
+        } else {
+            setShowErrorToast(true);
+            setTimeout(() => setShowErrorToast(false), 4000);
+        }
+    }
+
+    const handleEnrollment = async (courseId) => {
+        // Use currentUser from backend instead of AuthContext user
+        const userId = currentUser?.userId;
+        
+        if (!AuthService.isAuthenticated() || !currentUser || !userId) {
+            showToast('Please log in to enroll in courses', false);
+            return;
+        }
+
+        setEnrolling(prev => ({ ...prev, [courseId]: true }));
+        
+        try {
+            await EnrollmentService.enrollUserInCourse(userId, courseId);
+            setEnrollmentStatus(prev => ({ ...prev, [courseId]: true }));
+            
+            // Dispatch custom event to notify other components
+            window.dispatchEvent(new CustomEvent('enrollmentUpdated'));
+            
+            const courseName = courses.find(c => c.courseId === courseId)?.title || 'course';
+            showToast(`Successfully enrolled in ${courseName}!`, true);
+        } catch (error) {
+            console.error('Error enrolling in course:', error);
+            if (error.response?.data?.message) {
+                showToast(error.response.data.message, false);
+            } else {
+                showToast('Failed to enroll in course. Please try again.', false);
+            }
+        } finally {
+            setEnrolling(prev => ({ ...prev, [courseId]: false }));
+        }
+    }
+
     return (
         <div className="list-page-container">
             <div className="container">
@@ -225,7 +341,7 @@ const ListCourseComponent = () => {
                     <>
                         <div className="list-card-container">
                             {filteredCourses.slice(0, visibleCount).map((course) => (
-                                <div key={course.courseId} className="list-card user-card text-center" onClick={() => { setSelectedCourseId(course.courseId); setShowModal(true); }} style={{cursor: 'pointer'}}>
+                                <div key={course.courseId} className="list-card user-card text-center position-relative" onClick={() => { setSelectedCourseId(course.courseId); setShowModal(true); }} style={{cursor: 'pointer', overflow: 'visible'}}>
                                     <div className="user-card-header">
                                         <div className="user-card-avatar">
                                             <i className="fas fa-book"></i>
@@ -256,25 +372,158 @@ const ListCourseComponent = () => {
                                             )}
                                         </div>
                                     </div>
+                                    {/* Enrollment Status Badge - Only for non-admin users */}
+                                    {AuthService.isAuthenticated() && currentUser && !AuthService.isAdmin() && (
+                                        <div className="enrollment-status-badge position-absolute" style={{top: '15px', right: '15px', zIndex: 30}}>
+                                            {enrollmentStatus[course.courseId] ? (
+                                                <div className="enrollment-badge enrolled-badge" style={{
+                                                    background: 'linear-gradient(135deg, #28a745 0%, #20c997 100%)',
+                                                    color: 'white',
+                                                    padding: '8px 16px',
+                                                    borderRadius: '25px',
+                                                    fontSize: '0.85rem',
+                                                    fontWeight: '600',
+                                                    boxShadow: '0 4px 15px rgba(40, 167, 69, 0.4)',
+                                                    transform: 'rotate(-8deg) scale(1.05)',
+                                                    border: '2px solid rgba(255, 255, 255, 0.3)',
+                                                    backdropFilter: 'blur(10px)',
+                                                    animation: 'pulse 2s infinite',
+                                                    transition: 'all 0.3s ease'
+                                                }}>
+                                                    <i className="fas fa-crown me-2" style={{color: '#ffd700'}}></i>
+                                                    <span>ENROLLED</span>
+                                                    <div style={{
+                                                        position: 'absolute',
+                                                        top: '-2px',
+                                                        right: '-2px',
+                                                        width: '8px',
+                                                        height: '8px',
+                                                        background: '#ffd700',
+                                                        borderRadius: '50%',
+                                                        animation: 'sparkle 1.5s infinite'
+                                                    }}></div>
+                                                </div>
+                                            ) : (
+                                                <div className="enrollment-badge not-enrolled-badge" style={{
+                                                    background: 'linear-gradient(135deg, #ffc107 0%, #fd7e14 100%)',
+                                                    color: '#212529',
+                                                    padding: '8px 16px',
+                                                    borderRadius: '25px',
+                                                    fontSize: '0.85rem',
+                                                    fontWeight: '600',
+                                                    boxShadow: '0 4px 15px rgba(255, 193, 7, 0.4)',
+                                                    transform: 'rotate(8deg) scale(1.05)',
+                                                    border: '2px solid rgba(255, 255, 255, 0.5)',
+                                                    backdropFilter: 'blur(10px)',
+                                                    animation: 'bounce 2s infinite',
+                                                    transition: 'all 0.3s ease',
+                                                    position: 'relative'
+                                                }}>
+                                                    <i className="fas fa-bolt me-2" style={{color: '#dc3545'}}></i>
+                                                    <span>JOIN NOW</span>
+                                                    <div style={{
+                                                        position: 'absolute',
+                                                        top: '50%',
+                                                        right: '-12px',
+                                                        transform: 'translateY(-50%)',
+                                                        width: '0',
+                                                        height: '0',
+                                                        borderLeft: '8px solid #fd7e14',
+                                                        borderTop: '6px solid transparent',
+                                                        borderBottom: '6px solid transparent'
+                                                    }}></div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
                                     <div className="card-actions mt-3 d-flex gap-2">
-                                        <Link
-                                            className="btn btn-outline-primary btn-sm flex-fill"
-                                            to={`/edit-course/${course.courseId}`}
-                                            title="Edit this course"
-                                            onClick={(e) => e.stopPropagation()}
-                                        >
-                                            <i className="fas fa-edit me-1"></i>Edit
-                                        </Link>
-                                        <button
-                                            className="btn btn-outline-danger btn-sm flex-fill"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                deleteCourse(course.courseId);
-                                            }}
-                                            title="Delete this course"
-                                        >
-                                            <i className="fas fa-trash me-1"></i>Delete
-                                        </button>
+                                        {/* Admin View */}
+                                        {AuthService.isAdmin() ? (
+                                            <>
+                                                <button
+                                                    className="btn btn-outline-info btn-sm flex-fill"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setSelectedCourseId(course.courseId);
+                                                        setShowModal(true);
+                                                    }}
+                                                    title="View course details"
+                                                >
+                                                    <i className="fas fa-info-circle me-1"></i>View Details
+                                                </button>
+                                                <Link
+                                                    className="btn btn-outline-primary btn-sm"
+                                                    to={`/edit-course/${course.courseId}`}
+                                                    title="Edit this course"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    <i className="fas fa-edit"></i>
+                                                </Link>
+                                                <button
+                                                    className="btn btn-outline-danger btn-sm"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        deleteCourse(course.courseId);
+                                                    }}
+                                                    title="Delete this course"
+                                                >
+                                                    <i className="fas fa-trash"></i>
+                                                </button>
+                                            </>
+                                        ) : (
+                                            /* Regular User View */
+                                            <>
+                                                {/* Enrollment/View Button */}
+                                                {AuthService.isAuthenticated() && currentUser ? (
+                                                    enrollmentStatus[course.courseId] ? (
+                                                        <button
+                                                            className="btn btn-success btn-sm flex-fill"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setSelectedCourseId(course.courseId);
+                                                                setShowModal(true);
+                                                            }}
+                                                            title="View course lessons"
+                                                        >
+                                                            <i className="fas fa-play me-1"></i>View Lessons
+                                                        </button>
+                                                    ) : (
+                                                        <button
+                                                            className="btn btn-primary btn-sm flex-fill"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleEnrollment(course.courseId);
+                                                            }}
+                                                            disabled={enrolling[course.courseId]}
+                                                            title="Enroll in this course"
+                                                        >
+                                                            {enrolling[course.courseId] ? (
+                                                                <>
+                                                                    <i className="fas fa-spinner fa-spin me-1"></i>Enrolling...
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <i className="fas fa-user-plus me-1"></i>Enroll Now
+                                                                </>
+                                                            )}
+                                                        </button>
+                                                    )
+                                                ) : (
+                                                    <button
+                                                        className="btn btn-outline-info btn-sm flex-fill"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setSelectedCourseId(course.courseId);
+                                                            setShowModal(true);
+                                                        }}
+                                                        title="View course details"
+                                                    >
+                                                        <i className="fas fa-info-circle me-1"></i>View Details
+                                                    </button>
+                                                )}
+                                            </>
+                                        )}
                                     </div>
                                 </div>
                             ))}
@@ -347,18 +596,101 @@ const ListCourseComponent = () => {
                                                 <span className="stat-number">{lessons.length}</span>
                                             </div>
                                         </div>
+                                        {/* Enrollment Status and Button - Only for non-admin users */}
+                                        {AuthService.isAuthenticated() && currentUser && !AuthService.isAdmin() && (
+                                            <div className="enrollment-section mt-4 p-3 bg-light rounded">
+                                                {enrollmentStatus[selectedCourse.courseId] ? (
+                                                    <div className="text-success">
+                                                        <i className="fas fa-check-circle me-2"></i>
+                                                        You are enrolled in this course
+                                                    </div>
+                                                ) : (
+                                                    <div>
+                                                        <p className="text-muted mb-2">
+                                                            <i className="fas fa-info-circle me-2"></i>
+                                                            You need to enroll to access the lessons
+                                                        </p>
+                                                        <button
+                                                            className="btn btn-primary"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleEnrollment(selectedCourse.courseId);
+                                                            }}
+                                                            disabled={enrolling[selectedCourse.courseId]}
+                                                        >
+                                                            {enrolling[selectedCourse.courseId] ? (
+                                                                <>
+                                                                    <i className="fas fa-spinner fa-spin me-2"></i>
+                                                                    Enrolling...
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <i className="fas fa-user-plus me-2"></i>
+                                                                    Enroll in Course
+                                                                </>
+                                                            )}
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+
                                         <div className="lesson-section mt-4">
                                             {lessons.length > 0 ? (
-                                                <ul className="lesson-list">
-                                                    {lessons.map((lesson) => (
-                                                        <li key={lesson.lessonId} className="lesson-item" style={{paddingLeft: '2em'}}>
-                                                            <Link to={`/lessons?selected=${lesson.lessonId}`} className="lesson-link" onClick={() => setShowModal(false)}>
-                                                                <i className="fas fa-play-circle me-2"></i>
-                                                                {lesson.title}
-                                                            </Link>
-                                                        </li>
-                                                    ))}
-                                                </ul>
+                                                <>
+                                                    {/* Admin users can always access lessons */}
+                                                    {AuthService.isAdmin() ? (
+                                                        <ul className="lesson-list">
+                                                            {lessons.map((lesson) => (
+                                                                <li key={lesson.lessonId} className="lesson-item" style={{paddingLeft: '2em'}}>
+                                                                    <Link to={`/lessons?selected=${lesson.lessonId}`} className="lesson-link" onClick={() => setShowModal(false)}>
+                                                                        <i className="fas fa-play-circle me-2"></i>
+                                                                        {lesson.title}
+                                                                    </Link>
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    ) : (
+                                                        /* Regular users need enrollment to access lessons */
+                                                        <>
+                                                            {AuthService.isAuthenticated() && currentUser && enrollmentStatus[selectedCourse.courseId] ? (
+                                                                <ul className="lesson-list">
+                                                                    {lessons.map((lesson) => (
+                                                                        <li key={lesson.lessonId} className="lesson-item" style={{paddingLeft: '2em'}}>
+                                                                            <Link to={`/lessons?selected=${lesson.lessonId}`} className="lesson-link" onClick={() => setShowModal(false)}>
+                                                                                <i className="fas fa-play-circle me-2"></i>
+                                                                                {lesson.title}
+                                                                            </Link>
+                                                                        </li>
+                                                                    ))}
+                                                                </ul>
+                                                            ) : (
+                                                                <div className="locked-lessons">
+                                                                    <h6 className="text-muted mb-3">
+                                                                        <i className="fas fa-lock me-2"></i>
+                                                                        Course Lessons ({lessons.length})
+                                                                    </h6>
+                                                                    <ul className="lesson-list">
+                                                                        {lessons.map((lesson) => (
+                                                                            <li key={lesson.lessonId} className="lesson-item locked" style={{paddingLeft: '2em'}}>
+                                                                                <span className="text-muted">
+                                                                                    <i className="fas fa-lock me-2"></i>
+                                                                                    {lesson.title}
+                                                                                </span>
+                                                                            </li>
+                                                                        ))}
+                                                                    </ul>
+                                                                    {!AuthService.isAuthenticated() && (
+                                                                        <p className="text-muted mt-2">
+                                                                            <i className="fas fa-info-circle me-2"></i>
+                                                                            Please log in and enroll to access lessons
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                        </>
+                                                    )}
+                                                </>
                                             ) : (
                                                 <p className="text-muted">No lessons added yet.</p>
                                             )}
@@ -367,6 +699,45 @@ const ListCourseComponent = () => {
                                 </div>
                             </Modal.Body>
                         </Modal>
+                )}
+
+                {/* Toast Notifications */}
+                {showSuccessToast && (
+                    <div className="position-fixed top-0 end-0 p-3" style={{zIndex: 1050}}>
+                        <div className="toast show" role="alert">
+                            <div className="toast-header bg-success text-white">
+                                <i className="fas fa-check-circle me-2"></i>
+                                <strong className="me-auto">Success</strong>
+                                <button 
+                                    type="button" 
+                                    className="btn-close btn-close-white" 
+                                    onClick={() => setShowSuccessToast(false)}
+                                ></button>
+                            </div>
+                            <div className="toast-body">
+                                {toastMessage}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {showErrorToast && (
+                    <div className="position-fixed top-0 end-0 p-3" style={{zIndex: 1050}}>
+                        <div className="toast show" role="alert">
+                            <div className="toast-header bg-danger text-white">
+                                <i className="fas fa-exclamation-circle me-2"></i>
+                                <strong className="me-auto">Error</strong>
+                                <button 
+                                    type="button" 
+                                    className="btn-close btn-close-white" 
+                                    onClick={() => setShowErrorToast(false)}
+                                ></button>
+                            </div>
+                            <div className="toast-body">
+                                {toastMessage}
+                            </div>
+                        </div>
+                    </div>
                 )}
             </div>
         </div>

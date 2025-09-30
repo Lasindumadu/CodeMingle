@@ -129,3 +129,57 @@
   color: #c0392b;
   transform: translateX(5px);
 }
+
+/* Dark Theme Overrides for Auth Styles */
+.dark-theme .login-button {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-blue) 100%);
+  border: 2px solid transparent;
+}
+
+.dark-theme .login-button:hover {
+  box-shadow: 0 8px 20px rgba(77, 171, 247, 0.5);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.dark-theme .profile-avatar.user {
+  background: linear-gradient(135deg, var(--success-color) 0%, #2ecc71 100%);
+}
+
+.dark-theme .profile-avatar.admin {
+  background: linear-gradient(135deg, var(--danger-color) 0%, #c0392b 100%);
+}
+
+.dark-theme .admin-badge {
+  background: var(--warning-color);
+  box-shadow: 0 2px 8px rgba(255, 212, 59, 0.4);
+}
+
+.dark-theme .dropdown-user-info {
+  border-bottom: 1px solid var(--border-color);
+}
+
+.dark-theme .dropdown-username {
+  color: var(--text-primary);
+}
+
+.dark-theme .dropdown-role {
+  color: var(--text-muted);
+}
+
+.dark-theme .dropdown-item {
+  color: var(--text-primary);
+}
+
+.dark-theme .dropdown-item:hover {
+  background: rgba(77, 171, 247, 0.1);
+  color: var(--primary-color);
+}
+
+.dark-theme .dropdown-item.logout {
+  color: var(--danger-color);
+}
+
+.dark-theme .dropdown-item.logout:hover {
+  background: rgba(255, 107, 107, 0.1);
+  color: #ff4757;
+}

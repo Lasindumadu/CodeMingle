@@ -1,4 +1,4 @@
-/* Enhanced card style for list components with gradients, animations, and improved attractiveness */
+ /* Enhanced card style for list components with gradients, animations, and improved attractiveness */
 .list-page-container, .lesson-page-container {
   min-height: 100vh;
   background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
@@ -15,7 +15,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(var(--bg-primary-rgb, 255, 255, 255), 0.9);
   z-index: 0;
 }
 
@@ -26,7 +26,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(var(--bg-primary-rgb, 255, 255, 255), 0.9);
   z-index: 0;
 }
 
@@ -88,7 +88,7 @@
 .list-title {
   font-size: 3rem;
   font-weight: 800;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-purple, #764ba2) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -98,7 +98,7 @@
 
 /* Animated add button */
 .add-button {
-  background: linear-gradient(135deg, #6EE7F9 0%, #A78BFA 50%, #F472B6 100%);
+  background: linear-gradient(135deg, var(--accent-blue, #6EE7F9) 0%, var(--accent-purple, #A78BFA) 50%, var(--accent-pink, #F472B6) 100%);
   background-size: 200% 200%;
   border: none;
   padding: 1rem 2.75rem;
@@ -107,7 +107,7 @@
   letter-spacing: 0.3px;
   border-radius: 999px;
   transition: all 0.35s ease;
-  box-shadow: 0 10px 25px rgba(103, 114, 229, 0.35), 0 2px 6px rgba(0,0,0,0.08);
+  box-shadow: 0 10px 25px rgba(var(--primary-color-rgb, 103, 114, 229), 0.35), 0 2px 6px rgba(0,0,0,0.08);
   position: relative;
   overflow: hidden;
   color: #fff !important;
@@ -167,7 +167,7 @@
   left: 16px;
   top: 50%;
   transform: translateY(-50%);
-  color: #667eea;
+  color: var(--primary-color);
   font-size: 1.1rem;
   pointer-events: none;
   z-index: 10;
@@ -187,8 +187,8 @@
 }
 
 .search-container input:focus {
-  border-color: #667eea;
-  box-shadow: 0 5px 30px rgba(102, 126, 234, 0.3);
+  border-color: var(--primary-color);
+  box-shadow: 0 5px 30px rgba(var(--primary-color-rgb, 102, 126, 234), 0.3);
   outline: none;
   transform: translateY(-2px);
 }
@@ -199,7 +199,7 @@
   right: 28px !important;
   top: 50%;
   transform: translateY(-50%);
-  color: #667eea;
+  color: var(--primary-color);
   font-size: 1.2rem;
   pointer-events: none;
   z-index: 10;
@@ -223,7 +223,7 @@
 
 .sort-container .form-label {
   font-weight: 700;
-  color: #667eea;
+  color: var(--primary-color);
   margin-bottom: 0.5rem;
   font-size: 0.9rem;
   text-transform: uppercase;
@@ -275,7 +275,7 @@
 }
 
 .empty-state i {
-  color: #667eea;
+  color: var(--primary-color);
   animation: bounce 2s ease-in-out infinite;
 }
 
@@ -476,16 +476,18 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 100%;
+  height: 0%;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  transform: translateY(-100%);
-  transition: transform 0.4s ease;
+  border-radius: 25px;
+  transition: height 0.4s ease;
   z-index: -1;
 }
 
 .list-card:hover::before {
-  transform: translateY(0);
+  height: 100%;
 }
+
+/* Course cards should have purple hover effect like lesson cards */
 
 .list-card:hover {
   transform: translateY(-10px) rotateX(5deg);
@@ -513,7 +515,7 @@
 
 /* Animated card icon */
 .card-icon {
-  color: #667eea;
+  color: var(--primary-color);
   margin-bottom: 1.5rem;
   transition: all 0.4s ease;
   animation: float 3s ease-in-out infinite;
@@ -538,12 +540,20 @@
   transition: all 0.4s ease;
 }
 
-/* Improve default text contrast on cards */
-.list-card .card-subtitle { color: #374151 !important; }
-.list-card .card-meta { color: #6b7280 !important; font-weight: 500; }
-.list-card .card-meta .course-badge { background: none !important; color: #6b7280 !important; padding: 0; border-radius: 0; margin-left: 6px; display: inline; border: none; box-shadow: none; font-weight: 500; }
-.list-card:hover .card-meta { color: #ffffff !important; }
-.list-card:hover .card-meta .course-badge { background: none !important; color: #ffffff !important; box-shadow: none; }
+/* Improve default text contrast on cards using theme variables */
+.list-card .card-subtitle { color: var(--text-secondary) !important; }
+.list-card .card-meta { color: var(--text-muted) !important; font-weight: 500; }
+.list-card .card-meta .course-badge { background: none !important; color: var(--text-muted) !important; padding: 0; border-radius: 0; margin-left: 6px; display: inline; border: none; box-shadow: none; font-weight: 500; }
+.list-card:hover .card-meta { color: var(--border-color) !important; }
+.list-card:hover .card-meta .course-badge { background: none !important; color: var(--border-color) !important; box-shadow: none; }
+.dark-theme .list-card:hover .card-meta { color: var(--border-light) !important; }
+.dark-theme .list-card:hover .card-meta .course-badge { background: none !important; color: var(--border-light) !important; box-shadow: none; }
+.dark-theme .list-card.user-card .card-subtitle { color: var(--border-light) !important; }
+.dark-theme .list-card .card-subtitle { color: var(--border-light) !important; }
+.dark-theme .list-card .card-meta { color: var(--border-light) !important; font-weight: 500; }
+.dark-theme .list-card .card-meta .course-badge { background: none !important; color: var(--border-light) !important; padding: 0; border-radius: 0; margin-left: 6px; display: inline; border: none; box-shadow: none; font-weight: 500; }
+.dark-theme .list-card:hover .card-meta { color: var(--border-light) !important; }
+
 
 .card-title::after {
   content: '';
@@ -552,7 +562,7 @@
   left: 0;
   width: 0;
   height: 3px;
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  background: linear-gradient(135deg, var(--accent-pink, #f093fb) 0%, var(--accent-orange, #f5576c) 100%);
   transition: width 0.4s ease;
 }
 
@@ -598,7 +608,7 @@
 
 /* Load more button with pulse effect */
 .btn-secondary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-purple, #764ba2) 100%);
   border: none;
   padding: 1rem 3rem;
   font-weight: 700;
@@ -641,7 +651,7 @@
 }
 
 .modal-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-purple, #764ba2) 100%);
   border: none;
   padding: 2rem;
   color: white;
@@ -660,7 +670,7 @@
 
 /* Enhanced User Profile Modal Styles */
 .user-modal-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-purple, #764ba2) 100%);
   border: none;
   padding: 1.5rem;
   position: relative;
@@ -688,7 +698,7 @@
 }
 
 .user-modal-title i {
-  color: #ffd700;
+  color: var(--accent-orange, #ffd700);
   text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
 }
 
@@ -713,7 +723,7 @@
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(90deg, var(--primary-color) 0%, var(--accent-purple, #764ba2) 100%);
 }
 
 .user-avatar-section {
@@ -725,13 +735,13 @@
 .user-avatar {
   width: 60px;
   height: 60px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-purple, #764ba2) 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0 auto 0.5rem;
-  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 8px 20px rgba(var(--primary-color-rgb, 102, 126, 234), 0.4);
   position: relative;
   transition: all 0.3s ease;
 }
@@ -743,7 +753,7 @@
   left: -3px;
   right: -3px;
   bottom: -3px;
-  background: linear-gradient(135deg, #ffd700, #ff6b6b);
+  background: linear-gradient(135deg, var(--accent-orange, #ffd700), var(--accent-pink, #ff6b6b));
   border-radius: 50%;
   z-index: -1;
   animation: rotate 3s linear infinite;
@@ -769,7 +779,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  background: linear-gradient(135deg, #4CAF50, #45a049);
+  background: linear-gradient(135deg, var(--success-color, #4CAF50), #45a049);
   color: white;
   padding: 0.5rem 1rem;
   border-radius: 25px;
@@ -788,6 +798,47 @@
   0%, 50% { opacity: 1; }
   51%, 100% { opacity: 0.3; }
 }
+
+/* Enrollment Badge Animations */
+@keyframes sparkle {
+  0%, 100% { 
+    opacity: 1; 
+    transform: scale(1); 
+  }
+  50% { 
+    opacity: 0.3; 
+    transform: scale(1.5); 
+  }
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0) rotate(8deg) scale(1.05);
+  }
+  40% {
+    transform: translateY(-10px) rotate(8deg) scale(1.05);
+  }
+  60% {
+    transform: translateY(-5px) rotate(8deg) scale(1.05);
+  }
+}
+
+/* Enhanced enrollment badge hover effects */
+.enrollment-badge:hover {
+  transform: rotate(0deg) scale(1.15) !important;
+  animation: none !important;
+  cursor: pointer;
+}
+
+.enrolled-badge:hover {
+  box-shadow: 0 8px 25px rgba(40, 167, 69, 0.6) !important;
+}
+
+.not-enrolled-badge:hover {
+  box-shadow: 0 8px 25px rgba(255, 193, 7, 0.6) !important;
+}
+
+/* Course cards use the same purple hover effect as lesson cards */
 
 .user-name {
   font-size: 1.4rem;
@@ -1774,4 +1825,839 @@
   background: linear-gradient(135deg, #138496, #117a8b);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(23, 162, 184, 0.4);
+}
+
+/* Dark Theme Overrides for List Components */
+.dark-theme .list-page-container,
+.dark-theme .lesson-page-container {
+  background: linear-gradient(-45deg, #1e293b, #334155, #475569, #64748b);
+  background-size: 400% 400%;
+}
+
+.dark-theme .list-page-container::before,
+.dark-theme .lesson-page-container::before {
+  background: rgba(15, 23, 42, 0.9);
+}
+
+.dark-theme .list-card-container {
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+  border: 1px solid var(--border-color);
+}
+
+.dark-theme .list-header {
+  background: rgba(30, 41, 59, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.dark-theme .list-title {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-blue) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.dark-theme .add-button {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-blue) 50%, var(--accent-purple) 100%);
+  box-shadow: 0 10px 25px rgba(77, 171, 247, 0.4), 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.dark-theme .add-button:hover {
+  box-shadow: 0 16px 40px rgba(77, 171, 247, 0.5), 0 6px 14px rgba(0, 0, 0, 0.3);
+}
+
+.dark-theme .search-container::before {
+  color: var(--primary-color);
+}
+
+.dark-theme .search-container input.form-control {
+  background: var(--bg-secondary);
+  border: 3px solid var(--border-color);
+  color: var(--text-primary);
+  box-shadow: 0 5px 25px rgba(0, 0, 0, 0.3);
+}
+
+.dark-theme .search-container input:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 5px 30px rgba(77, 171, 247, 0.4);
+}
+
+.dark-theme .search-container input::placeholder {
+  color: var(--text-muted);
+}
+
+.dark-theme .search-container .search-icon {
+  color: var(--primary-color);
+}
+
+.dark-theme .sort-container {
+  background: var(--bg-secondary);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.dark-theme .sort-container .form-label {
+  color: var(--primary-color);
+}
+
+.dark-theme .sort-container .form-select {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.dark-theme .sort-container .form-select:focus {
+  box-shadow: 0 0 0 3px rgba(77, 171, 247, 0.25);
+}
+
+.dark-theme .empty-state {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+}
+
+.dark-theme .empty-state::before {
+  background: linear-gradient(45deg, var(--primary-color) 0%, var(--accent-purple) 100%);
+}
+
+.dark-theme .empty-state i {
+  color: var(--primary-color);
+}
+
+.dark-theme .list-card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.dark-theme .list-card:hover {
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.dark-theme .list-card::before {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+}
+
+.dark-theme .user-card {
+  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+  border: 1px solid var(--border-color);
+}
+
+.dark-theme .user-card::before {
+  background: linear-gradient(90deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-pink) 100%);
+}
+
+.dark-theme .user-card-avatar {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-blue) 100%);
+  box-shadow: 0 8px 25px rgba(77, 171, 247, 0.4);
+}
+
+.dark-theme .user-card-avatar::before {
+  background: linear-gradient(135deg, var(--accent-orange), var(--accent-pink));
+}
+
+.dark-theme .user-card-status {
+  background: linear-gradient(135deg, var(--success-color), #45a049);
+  box-shadow: 0 2px 8px rgba(81, 207, 102, 0.4);
+}
+
+.dark-theme .info-item {
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+  border-left: 3px solid var(--primary-color);
+}
+
+.dark-theme .info-item:hover {
+  box-shadow: 0 5px 15px rgba(77, 171, 247, 0.2);
+}
+
+.dark-theme .info-item i {
+  color: var(--primary-color);
+}
+
+.dark-theme .info-label {
+  color: var(--text-muted);
+}
+
+.dark-theme .info-value {
+  color: var(--text-primary);
+}
+
+.dark-theme .meta-item {
+  color: var(--text-muted);
+}
+
+.dark-theme .meta-item i {
+  color: var(--primary-color);
+}
+
+.dark-theme .list-card.selected {
+  background: rgba(255, 212, 59, 0.1);
+  border: 2px solid var(--warning-color);
+  box-shadow: 0 0 15px 3px rgba(255, 212, 59, 0.4);
+}
+
+.dark-theme .card-icon {
+  color: var(--primary-color);
+}
+
+.dark-theme .card-title {
+  color: var(--text-primary);
+}
+
+.dark-theme .card-title::after {
+  background: linear-gradient(135deg, var(--accent-pink) 0%, var(--accent-orange) 100%);
+}
+
+.dark-theme .card-subtitle {
+  color: var(--border-light) !important;
+}
+
+.dark-theme .list-card:hover .card-subtitle {
+  color: var(--text-primary) !important; /* white color when card is hovered */
+}
+
+.dark-theme .card-meta {
+  color: var(--text-muted) !important;
+}
+
+.dark-theme .card-meta .course-badge {
+  color: var(--text-muted) !important;
+}
+
+.dark-theme .list-card:hover .card-meta {
+  color: #ffffff !important;
+}
+
+.dark-theme .list-card:hover .card-meta .course-badge {
+  color: #ffffff !important;
+}
+
+.dark-theme .card-actions .btn {
+  border: 1px solid var(--border-color);
+}
+
+.dark-theme .list-card:hover .card-actions .btn {
+  background: white;
+  color: var(--primary-color);
+  border-color: white;
+}
+
+.dark-theme .btn-secondary {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-blue) 100%);
+}
+
+.dark-theme .modal-backdrop {
+  backdrop-filter: blur(5px);
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.dark-theme .modal-content {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6);
+}
+
+.dark-theme .modal-header {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-blue) 100%);
+}
+
+.dark-theme .modal-title {
+  color: white;
+}
+
+.dark-theme .user-modal-header {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-blue) 100%);
+}
+
+.dark-theme .user-modal-title {
+  color: white;
+}
+
+.dark-theme .user-modal-title i {
+  color: var(--accent-orange);
+  text-shadow: 0 0 10px rgba(255, 146, 43, 0.5);
+}
+
+.dark-theme .user-modal-body {
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+}
+
+.dark-theme .user-profile-card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+}
+
+.dark-theme .user-profile-card::before {
+  background: linear-gradient(90deg, var(--primary-color) 0%, var(--accent-blue) 100%);
+}
+
+.dark-theme .user-avatar {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-blue) 100%);
+  box-shadow: 0 8px 20px rgba(77, 171, 247, 0.5);
+}
+
+.dark-theme .user-avatar::before {
+  background: linear-gradient(135deg, var(--accent-orange), var(--accent-pink));
+}
+
+.dark-theme .user-avatar:hover {
+  box-shadow: 0 20px 45px rgba(77, 171, 247, 0.7);
+}
+
+.dark-theme .user-status-badge {
+  background: linear-gradient(135deg, var(--success-color), #45a049);
+  box-shadow: 0 4px 15px rgba(81, 207, 102, 0.4);
+}
+
+.dark-theme .user-name {
+  color: var(--text-primary);
+}
+
+.dark-theme .user-name i {
+  color: var(--primary-color);
+}
+
+.dark-theme .detail-item {
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+  border-left: 3px solid var(--primary-color);
+}
+
+.dark-theme .detail-item::before {
+  background: linear-gradient(135deg, rgba(77, 171, 247, 0.1), rgba(116, 192, 252, 0.1));
+}
+
+.dark-theme .detail-item:hover {
+  box-shadow: 0 10px 25px rgba(77, 171, 247, 0.2);
+}
+
+.dark-theme .detail-icon {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-blue) 100%);
+  box-shadow: 0 2px 8px rgba(77, 171, 247, 0.4);
+}
+
+.dark-theme .detail-label {
+  color: var(--text-muted);
+}
+
+.dark-theme .detail-value {
+  color: var(--text-primary);
+}
+
+.dark-theme .admin-role {
+  background: linear-gradient(135deg, var(--danger-color), #ee5a24);
+  box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+}
+
+.dark-theme .user-role {
+  background: linear-gradient(135deg, var(--info-color), #44a08d);
+  box-shadow: 0 4px 15px rgba(116, 192, 252, 0.4);
+}
+
+.dark-theme .user-stats {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-blue) 100%);
+}
+
+.dark-theme .stat-item {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.dark-theme .stat-item:hover {
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.dark-theme .stat-item i {
+  color: var(--accent-orange);
+  text-shadow: 0 0 10px rgba(255, 146, 43, 0.5);
+}
+
+.dark-theme .stat-number {
+  color: var(--accent-orange);
+}
+
+.dark-theme .user-modal-footer {
+  background: var(--bg-secondary);
+}
+
+.dark-theme .user-modal-footer .btn-primary {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-blue) 100%);
+  box-shadow: 0 4px 15px rgba(77, 171, 247, 0.5);
+}
+
+.dark-theme .user-modal-footer .btn-primary:hover {
+  box-shadow: 0 8px 25px rgba(77, 171, 247, 0.7);
+}
+
+.dark-theme .user-modal-footer .btn-outline-secondary {
+  border: 2px solid var(--text-muted);
+  color: var(--text-muted);
+}
+
+.dark-theme .user-modal-footer .btn-outline-secondary:hover {
+  background: var(--text-muted);
+  color: var(--bg-primary);
+}
+
+.dark-theme .user-form-container {
+  background: linear-gradient(-45deg, #1e293b, #334155, #475569, #64748b);
+  background-size: 400% 400%;
+}
+
+.dark-theme .user-form-container::before {
+  background: rgba(15, 23, 42, 0.9);
+}
+
+.dark-theme .user-form-card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+}
+
+.dark-theme .user-form-card::before {
+  background: linear-gradient(90deg, var(--primary-color) 0%, var(--accent-blue) 100%);
+}
+
+.dark-theme .user-form-header {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-blue) 100%);
+}
+
+.dark-theme .user-form-avatar {
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.dark-theme .user-form-title {
+  color: white;
+}
+
+.dark-theme .user-form-title i {
+  color: #fff700;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
+}
+
+.dark-theme .user-form-subtitle {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.dark-theme .user-form-body {
+  background: var(--bg-primary);
+}
+
+.dark-theme .user-form-alert {
+  background: linear-gradient(135deg, var(--danger-color), #ee5a24);
+  box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+}
+
+.dark-theme .form-section {
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+  border-left: 4px solid var(--primary-color);
+}
+
+.dark-theme .form-section::before {
+  background: linear-gradient(135deg, rgba(77, 171, 247, 0.1), rgba(116, 192, 252, 0.1));
+}
+
+.dark-theme .form-section-header {
+  color: var(--text-primary);
+}
+
+.dark-theme .form-section-header i {
+  color: var(--primary-color);
+}
+
+.dark-theme .form-field-label {
+  color: var(--text-primary);
+}
+
+.dark-theme .form-field-icon {
+  color: var(--primary-color);
+}
+
+.dark-theme .required-asterisk {
+  color: var(--danger-color);
+}
+
+.dark-theme .form-field-input-wrapper,
+.dark-theme .form-field-select-wrapper {
+  background: var(--bg-secondary);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.dark-theme .form-field-input-wrapper:hover,
+.dark-theme .form-field-select-wrapper:hover {
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.dark-theme .form-field-input,
+.dark-theme .form-field-select {
+  background: transparent;
+  color: var(--text-primary);
+}
+
+.dark-theme .form-field-input::placeholder {
+  color: var(--text-muted);
+}
+
+.dark-theme .form-field-input:focus,
+.dark-theme .form-field-select:focus {
+  color: var(--primary-color);
+}
+
+.dark-theme .form-field-focus-border {
+  background: linear-gradient(90deg, var(--primary-color) 0%, var(--accent-blue) 100%);
+}
+
+.dark-theme .form-field-input.is-invalid,
+.dark-theme .form-field-select.is-invalid {
+  color: var(--danger-color);
+}
+
+.dark-theme .form-field-input.is-invalid + .form-field-focus-border,
+.dark-theme .form-field-select.is-invalid + .form-field-focus-border {
+  background: linear-gradient(90deg, var(--danger-color) 0%, #ee5a24 100%);
+}
+
+.dark-theme .form-field-error {
+  color: var(--danger-color);
+}
+
+.dark-theme .form-field-help {
+  color: var(--text-muted);
+}
+
+.dark-theme .form-field-help i {
+  color: var(--primary-color);
+}
+
+.dark-theme .form-field-select.admin-role {
+  color: var(--danger-color);
+}
+
+.dark-theme .form-field-select.user-role {
+  color: var(--info-color);
+}
+
+.dark-theme .form-actions {
+  border-top: 1px solid var(--border-color);
+}
+
+.dark-theme .btn-cancel {
+  background: linear-gradient(135deg, var(--secondary-color) 0%, #495057 100%);
+  box-shadow: 0 4px 15px rgba(134, 142, 150, 0.4);
+}
+
+.dark-theme .btn-cancel:hover {
+  box-shadow: 0 8px 25px rgba(134, 142, 150, 0.5);
+  color: white;
+}
+
+.dark-theme .btn-submit {
+  background: linear-gradient(135deg, var(--success-color) 0%, #20c997 100%);
+  box-shadow: 0 4px 15px rgba(81, 207, 102, 0.4);
+}
+
+.dark-theme .btn-submit:hover:not(:disabled) {
+  box-shadow: 0 8px 25px rgba(81, 207, 102, 0.5);
+}
+
+.dark-theme .lesson-item:hover {
+  background: rgba(77, 171, 247, 0.1);
+}
+
+.dark-theme .lesson-link {
+  color: var(--text-primary);
+}
+
+.dark-theme .lesson-link:hover {
+  color: var(--primary-color);
+}
+
+.dark-theme .lesson-link:hover i {
+  color: var(--accent-orange);
+  text-shadow: 0 0 6px var(--accent-orange);
+}
+
+.dark-theme .completion-badge .badge {
+  background: var(--success-color) !important;
+}
+
+.dark-theme .btn-info {
+  background: linear-gradient(135deg, var(--info-color), #138496);
+  box-shadow: 0 2px 8px rgba(116, 192, 252, 0.4);
+}
+
+.dark-theme .btn-info:hover {
+  background: linear-gradient(135deg, #138496, #117a8b);
+  box-shadow: 0 4px 12px rgba(116, 192, 252, 0.5);
+}
+
+/* Comment content preview text color override for dark theme */
+.dark-theme .comment-content-preview p {
+  color: var(--text-primary) !important;
+}
+
+.dark-theme .comment-content-preview strong {
+  color: var(--text-primary) !important;
+}
+
+/* Lesson card content text color override for dark theme */
+.dark-theme .list-card p {
+  color: var(--text-primary) !important;
+}
+
+/* Lesson content HTML text color override for dark theme */
+.dark-theme .lesson-content-html p {
+  color: var(--text-primary) !important;
+}
+
+.dark-theme .lesson-content-html h1,
+.dark-theme .lesson-content-html h2,
+.dark-theme .lesson-content-html h3,
+.dark-theme .lesson-content-html h4,
+.dark-theme .lesson-content-html h5,
+.dark-theme .lesson-content-html h6 {
+  color: var(--text-primary) !important;
+}
+
+/* Fix quiz card description text color in dark mode */
+.dark-theme .list-card small {
+  color: var(--text-secondary) !important;
+}
+
+/* Dark theme overrides for Add Quiz page */
+.dark-theme .user-form-card .form-label {
+  color: var(--text-primary) !important;
+}
+
+.dark-theme .user-form-card .form-text {
+  color: var(--text-secondary) !important;
+}
+
+.dark-theme .user-form-card .card-header {
+  background-color: var(--bg-secondary) !important;
+  border-bottom-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+.dark-theme .user-form-card .card-header h6 {
+  color: var(--text-primary) !important;
+}
+
+.dark-theme .user-form-card .card-body {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+.dark-theme .user-form-card .alert-danger {
+  background-color: rgba(255, 107, 107, 0.1) !important;
+  border-color: rgba(255, 107, 107, 0.3) !important;
+  color: var(--danger-color) !important;
+}
+
+.dark-theme .user-form-card .btn-outline-danger {
+  color: var(--danger-color) !important;
+  border-color: var(--danger-color) !important;
+  background-color: transparent !important;
+}
+
+.dark-theme .user-form-card .btn-outline-danger:hover {
+  background-color: var(--danger-color) !important;
+  color: var(--bg-primary) !important;
+}
+
+.dark-theme .user-form-card .btn-primary {
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+  color: white !important;
+}
+
+.dark-theme .user-form-card .btn-primary:hover {
+  background-color: var(--accent-blue) !important;
+  border-color: var(--accent-blue) !important;
+  color: white !important;
+}
+
+.dark-theme .user-form-card .btn-cancel {
+  color: var(--text-secondary) !important;
+  background-color: transparent !important;
+  border-color: var(--border-color) !important;
+}
+
+.dark-theme .user-form-card .btn-cancel:hover {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+}
+
+.dark-theme .user-form-card .btn-submit {
+  background-color: var(--success-color) !important;
+  border-color: var(--success-color) !important;
+  color: white !important;
+}
+
+.dark-theme .user-form-card .btn-submit:hover {
+  background-color: var(--accent-green) !important;
+  border-color: var(--accent-green) !important;
+  color: white !important;
+}
+
+/* Additional text color overrides for headings and specific elements in Add Quiz */
+.dark-theme .user-form-container h1,
+.dark-theme .user-form-container h2,
+.dark-theme .user-form-container h3,
+.dark-theme .user-form-container h4,
+.dark-theme .user-form-container h5,
+.dark-theme .user-form-container h6 {
+  color: var(--text-primary) !important;
+}
+
+.dark-theme .user-form-container p,
+.dark-theme .user-form-container span,
+.dark-theme .user-form-container div {
+  color: white !important;
+}
+.dark-theme .user-form-container p,
+.dark-theme .user-form-container span,
+.dark-theme .user-form-container div {
+  color: var(--text-primary);
+}
+
+.dark-theme .user-form-container .form-check-label {
+  color: var(--text-primary) !important;
+}
+
+.dark-theme .user-form-container .text-muted {
+  color: var(--text-secondary) !important;
+}
+
+.dark-theme .user-form-container .text-success {
+  color: var(--success-color) !important;
+}
+
+.dark-theme .user-form-container .text-danger {
+  color: var(--danger-color) !important;
+}
+
+.dark-theme .user-form-container .text-warning {
+  color: var(--warning-color) !important;
+}
+
+.dark-theme .user-form-container .text-info {
+  color: var(--info-color) !important;
+}
+
+/* Quiz meta badges styles */
+.quiz-meta-badges {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.quiz-meta-badges .badge {
+  font-size: 0.85rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.quiz-meta-badges .badge:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  filter: brightness(1.1);
+}
+
+.quiz-meta-badges .badge i {
+  margin-right: 0.25rem;
+  font-size: 0.8rem;
+}
+
+/* Light theme for quiz badges */
+.quiz-meta-badges .badge.bg-warning {
+  background-color: #ffc107 !important;
+  color: #000 !important;
+  border-color: #e0a800 !important;
+}
+
+.quiz-meta-badges .badge.bg-success {
+  background-color: #28a745 !important;
+  color: #000 !important;
+  border-color: #1e7e34 !important;
+}
+
+/* Dark theme for quiz badges */
+.dark-theme .quiz-meta-badges .badge {
+  border: 1px solid var(--border-color);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.dark-theme .quiz-meta-badges .badge.bg-warning {
+  background: rgba(255, 193, 7, 0.6) !important;
+  color: #000 !important;
+  border-color: rgba(255, 193, 7, 0.8) !important;
+}
+
+.dark-theme .quiz-meta-badges .badge.bg-success {
+  background: rgba(40, 167, 69, 0.2) !important;
+  color: #28a745 !important;
+  border-color: rgba(40, 167, 69, 0.4) !important;
+}
+
+.dark-theme .quiz-meta-badges .badge:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  transform: translateY(-2px);
+}
+
+/* Enhanced quiz card hover effects */
+.list-card:hover .quiz-meta-badges .badge {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.dark-theme .list-card:hover .quiz-meta-badges .badge {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-weight: bold;
+}
+
+/* Responsive styles for quiz meta badges */
+@media (max-width: 768px) {
+  .quiz-meta-badges {
+    gap: 0.25rem;
+  }
+
+  .quiz-meta-badges .badge {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.6rem;
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .quiz-meta-badges .badge i {
+    margin-right: 0.2rem;
+    font-size: 0.75rem;
+  }
+
+  .list-card-container {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .list-card {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .quiz-meta-badges .badge {
+    font-size: 0.75rem;
+    padding: 0.35rem 0.5rem;
+  }
 }

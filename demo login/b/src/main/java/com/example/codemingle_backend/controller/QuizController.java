@@ -254,4 +254,41 @@ public class QuizController {
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
 
     }
+
+    // build get quizzes by lesson id REST API
+    @GetMapping("/lesson/{lessonId}")
+    public ResponseEntity<List<QuizDTO>> getQuizzesByLessonId(@PathVariable long lessonId){
+        // Verify lesson exists
+        lessonRepository.findById(lessonId)
+                .orElseThrow(() -> new ResourceNotFoundException("Lesson not exist with id: " + lessonId));
+
+        List<Quiz> quizzes = quizRepository.findByLessonId(lessonId);
+
+        List<QuizDTO> quizDTOs = quizzes.stream().map(quiz -> {
+            List<QuestionDTO> questionDTOs = quiz.getQuestions() != null ?
+                quiz.getQuestions().stream().map(q -> new QuestionDTO(
+                    q.getQuestionId(),
+                    q.getQuizId(),
+                    q.getQuestionText(),
+                    q.getOptionA(),
+                    q.getOptionB(),
+                    q.getOptionC(),
+                    q.getOptionD(),
+                    q.getCorrectAnswer(),
+                    q.getQuestionOrder()
+                )).toList() : new java.util.ArrayList<>();
+
+            return new QuizDTO(
+                quiz.getQuizId(),
+                quiz.getTitle(),
+                quiz.getDescription(),
+                quiz.getLessonId(),
+                quiz.getShuffleQuestions(),
+                quiz.getTimeLimitMinutes(),
+                questionDTOs
+            );
+        }).toList();
+
+        return ResponseEntity.ok(quizDTOs);
+    }
 }

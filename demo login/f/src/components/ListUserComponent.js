@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { Modal } from 'react-bootstrap'
 import UserService from '../services/UserService'
+import AuthService from '../services/AuthService'
+import { useAuth } from '../context/AuthContext'
 import './ListComponents.css'
 
 const ListUserComponent = () => {
@@ -14,6 +16,7 @@ const ListUserComponent = () => {
     const [showModal, setShowModal] = useState(false)
     const [sortField, setSortField] = useState('userId')
     const [sortOrder, setSortOrder] = useState('asc')
+    const { user: currentUser, isAuthenticated, isAdmin } = useAuth()
 
     useEffect(() => {
         getAllUsers()
@@ -117,14 +120,63 @@ const ListUserComponent = () => {
         setVisibleCount(prev => prev + 10)
     }
 
+    // Check if current user can edit/delete a specific user
+    const canManageUser = (targetUser) => {
+        // Only admins can manage users
+        if (!isAdmin()) {
+            return false
+        }
+        
+        // Admins can manage all users
+        return true
+    }
+
+    // Enhanced delete function with permission check
+    const handleDeleteUser = (userId, targetUser) => {
+        if (!canManageUser(targetUser)) {
+            alert('Only administrators can delete users.')
+            return
+        }
+        
+        if (window.confirm(`Are you sure you want to delete user "${targetUser.username}"? This action cannot be undone.`)) {
+            UserService.deleteUser(userId)
+                .then(() => {
+                    getAllUsers()
+                    // Show success message
+                    const successMessage = document.createElement('div')
+                    successMessage.innerHTML = `
+                        <div class="alert alert-success alert-dismissible fade show position-fixed" 
+                             style="top: 20px; right: 20px; z-index: 1050; max-width: 400px;" role="alert">
+                            <i class="fas fa-check-circle me-2"></i>
+                            <strong>User Deleted!</strong><br>
+                            User "${targetUser.username}" has been removed successfully.
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    `
+                    document.body.appendChild(successMessage)
+                    setTimeout(() => {
+                        if (successMessage.parentNode) {
+                            successMessage.parentNode.removeChild(successMessage)
+                        }
+                    }, 4000)
+                })
+                .catch((error) => {
+                    console.log(error)
+                    alert('Failed to delete user. Please try again.')
+                })
+        }
+    }
+
     return (
         <div className="list-page-container">
             <div className="container">
                 <div className="list-header d-flex justify-content-between align-items-center mb-4">
                     <h2 className="list-title mb-0">Users</h2>
-                    <Link to="/add-user" className="btn btn-primary btn-lg add-button" title="Add a new user">
-                        <i className="fas fa-plus me-2"></i>Add User
-                    </Link>
+                    {isAdmin() && (
+                        <Link to="/add-user" className="btn btn-primary btn-lg add-button" title="Add a new user">
+                            <i className="fas fa-plus me-2"></i>Add User
+                        </Link>
+                    )}
                 </div>
 
                 {users.length > 0 && (
@@ -280,14 +332,25 @@ const ListUserComponent = () => {
                                 <i className="fas fa-times me-1"></i>
                                 Close
                             </button>
-                            <Link 
-                                to={`/edit-user/${selectedUser.userId}`}
-                                className="btn btn-primary"
-                                onClick={() => { setSelectedUserId(''); setShowModal(false); }}
-                            >
-                                <i className="fas fa-edit me-1"></i>
-                                Edit Profile
-                            </Link>
+                            {canManageUser(selectedUser) ? (
+                                <Link 
+                                    to={`/edit-user/${selectedUser.userId}`}
+                                    className="btn btn-primary"
+                                    onClick={() => { setSelectedUserId(''); setShowModal(false); }}
+                                >
+                                    <i className="fas fa-edit me-1"></i>
+                                    Edit Profile
+                                </Link>
+                            ) : (
+                                <button 
+                                    className="btn btn-secondary"
+                                    disabled
+                                    title="Only administrators can edit user profiles"
+                                >
+                                    <i className="fas fa-lock me-1"></i>
+                                    Admin Only
+                                </button>
+                            )}
                         </Modal.Footer>
                     </Modal>
                 )}
@@ -349,26 +412,28 @@ const ListUserComponent = () => {
                                         </div>
                                     </div>
                                     
-                                    <div className="card-actions mt-3 d-flex gap-2">
-                                        <Link
-                                            className="btn btn-outline-primary btn-sm flex-fill"
-                                            to={`/edit-user/${user.userId}`}
-                                            title="Edit this user"
-                                            onClick={(e) => e.stopPropagation()}
-                                        >
-                                            <i className="fas fa-edit me-1"></i>Edit
-                                        </Link>
-                                        <button
-                                            className="btn btn-outline-danger btn-sm flex-fill"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                deleteUser(user.userId);
-                                            }}
-                                            title="Delete this user"
-                                        >
-                                            <i className="fas fa-trash me-1"></i>Delete
-                                        </button>
-                                    </div>
+                                    {canManageUser(user) && (
+                                        <div className="card-actions mt-3 d-flex gap-2">
+                                            <Link
+                                                className="btn btn-outline-primary btn-sm flex-fill"
+                                                to={`/edit-user/${user.userId}`}
+                                                title="Edit this user"
+                                                onClick={(e) => e.stopPropagation()}
+                                            >
+                                                <i className="fas fa-edit me-1"></i>Edit
+                                            </Link>
+                                            <button
+                                                className="btn btn-outline-danger btn-sm flex-fill"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDeleteUser(user.userId, user);
+                                                }}
+                                                title="Delete this user"
+                                            >
+                                                <i className="fas fa-trash me-1"></i>Delete
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                         </div>

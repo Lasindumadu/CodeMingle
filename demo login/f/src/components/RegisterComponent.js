@@ -73,34 +73,20 @@ const RegisterComponent = () => {
         return;
       }
 
-      // For demo purposes, simulate registration
-      // In production, this would call AuthService.register()
-      if (formData.username === 'admin' || formData.username === 'user') {
-        setError('Username already exists. Please choose a different username.');
-        return;
-      }
-
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Simulate successful registration
-      const userData = {
+      // Prepare registration data
+      const registrationData = {
         username: formData.username,
         email: formData.email,
+        password: formData.password,
         firstName: formData.firstName,
-        lastName: formData.lastName,
-        role: 'USER'
+        lastName: formData.lastName
       };
 
-      // Generate token for new user
-      const token = btoa(JSON.stringify({
-        username: formData.username,
-        role: 'USER',
-        exp: Date.now() + (24 * 60 * 60 * 1000) // 24 hours
-      }));
+      // Call real backend registration
+      const response = await AuthService.register(registrationData);
 
       // Auto login after successful registration
-      login(userData, token);
+      login(response, response.token);
 
       setSuccess(true);
 
@@ -110,7 +96,7 @@ const RegisterComponent = () => {
       }, 2000);
 
     } catch (err) {
-      setError(err.message || 'Registration failed. Please try again.');
+      setError(err.response?.data?.error || err.message || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }

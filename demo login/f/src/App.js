@@ -1,6 +1,8 @@
 import './App.css';
+import './styles/themes.css';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { SettingsProvider } from './context/SettingsContext';
 import FooterComponent from './components/FooterComponent';
 import HeaderComponent from './components/HeaderComponent';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -37,6 +39,7 @@ import SettingsComponent from './components/SettingsComponent';
 
 // Auth Components
 import LoginComponent from './components/LoginComponent';
+import RegisterComponent from './components/RegisterComponent';
 
 // Quiz Attempt Components
 // import ListQuizAttemptComponent from './components/ListQuizAttemptComponent';
@@ -49,13 +52,15 @@ import LoginComponent from './components/LoginComponent';
 function App() {
   return (
     <AuthProvider>
-      <div className="App">
-        <Router>
-          <HeaderComponent />
-          <div className="container">
+      <SettingsProvider>
+        <div className="App">
+          <Router>
+            <HeaderComponent />
+            <div className="container">
             <Routes>
               {/* Public Routes */}
               <Route path="/login" element={<LoginComponent />} />
+              <Route path="/register" element={<RegisterComponent />} />
 
               {/* Protected Routes */}
               <Route
@@ -259,6 +264,7 @@ function App() {
           <FooterComponent />
         </Router>
       </div>
+      </SettingsProvider>
     </AuthProvider>
   );
 }

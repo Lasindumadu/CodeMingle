@@ -23,6 +23,25 @@ class EnrollmentService{
     deleteEnrollment(enrollmentId){
         return axios.delete(ENROLLMENT_BASE_REST_API_URL + '/' + enrollmentId);
     }
+
+    // Check if user is enrolled in a course
+    checkUserEnrollment(userId, courseId){
+        return axios.get(`${ENROLLMENT_BASE_REST_API_URL}/check/${userId}/${courseId}`);
+    }
+
+    // Get enrollments for a specific user
+    getUserEnrollments(userId){
+        return axios.get(`${ENROLLMENT_BASE_REST_API_URL}/user/${userId}`);
+    }
+
+    // Enroll user in course
+    enrollUserInCourse(userId, courseId){
+        return axios.post(ENROLLMENT_BASE_REST_API_URL, {
+            userId: userId,
+            courseId: courseId,
+            enrollmentDate: new Date().toISOString().split('T')[0]
+        });
+    }
 }
 
 const enrollmentService = new EnrollmentService();

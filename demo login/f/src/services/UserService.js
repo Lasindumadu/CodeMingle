@@ -23,6 +23,10 @@ class UserService{
     deleteUser(userId){
         return axios.delete(USER_BASE_REST_API_URL + '/' + userId);
     }
+
+    getUserByUsername(username){
+        return axios.get(USER_BASE_REST_API_URL + '/username/' + username);
+    }
 }
 
 const userService = new UserService();

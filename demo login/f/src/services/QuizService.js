@@ -23,6 +23,10 @@ class QuizService{
     deleteQuiz(quizId){
         return axios.delete(QUIZ_BASE_REST_API_URL + '/' + quizId);
     }
+
+    getQuizzesByLessonId(lessonId){
+        return axios.get(QUIZ_BASE_REST_API_URL + '/lesson/' + lessonId);
+    }
 }
 
 const quizService = new QuizService();

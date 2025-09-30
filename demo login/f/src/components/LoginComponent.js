@@ -36,21 +36,25 @@ const LoginComponent = () => {
     setLoading(true);
 
     try {
-      // For now, use demo login with form credentials
-      // In production, this would call AuthService.login()
-      if (credentials.username === 'admin' && credentials.password === 'admin123') {
-        const data = await AuthService.demoLogin('admin');
-        login(data, data.token);
-        navigate(from, { replace: true });
-      } else if (credentials.username === 'user' && credentials.password === 'user123') {
-        const data = await AuthService.demoLogin('user');
+      const { username, password } = credentials;
+
+      // Check if user is trying to use demo credentials
+      if ((username === 'admin' && password === 'admin123') ||
+          (username === 'user' && password === 'user123')) {
+
+        // Use demo login for demo credentials
+        const accountType = username === 'admin' ? 'admin' : 'user';
+        const data = await AuthService.demoLogin(accountType);
         login(data, data.token);
         navigate(from, { replace: true });
       } else {
-        setError('Invalid username or password');
+        // Use real login for other credentials
+        const data = await AuthService.login(username, password);
+        login(data, data.token);
+        navigate(from, { replace: true });
       }
     } catch (err) {
-      setError(err.message || 'Login failed. Please try again.');
+      setError(err.response?.data?.error || err.message || 'Login failed. Please try again.');
     } finally {
       setLoading(false);
     }

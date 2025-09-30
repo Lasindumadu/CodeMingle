@@ -55,7 +55,6 @@ CREATE TABLE IF NOT EXISTS lessons (
     course_id BIGINT NOT NULL,
     title VARCHAR(255) NOT NULL,
     description TEXT,
-    topic VARCHAR(255),
     content_type VARCHAR(20) DEFAULT 'TEXT',
     content TEXT,
     video_url VARCHAR(255),

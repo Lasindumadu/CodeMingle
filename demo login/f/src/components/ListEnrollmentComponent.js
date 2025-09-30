@@ -5,6 +5,7 @@ import EnrollmentService from '../services/EnrollmentService'
 import UserService from '../services/UserService'
 import CourseService from '../services/CourseService'
 import LessonService from '../services/LessonService'
+import AuthService from '../services/AuthService'
 import './ListComponents.css'
 
 const ListEnrollmentComponent = () => {
@@ -20,26 +21,74 @@ const ListEnrollmentComponent = () => {
     const [lessons, setLessons] = useState([])
     const [sortField, setSortField] = useState('enrollmentId')
     const [sortOrder, setSortOrder] = useState('asc')
+    const [currentUser, setCurrentUser] = useState(null)
+    const [loading, setLoading] = useState(true)
 
     useEffect(() => {
-        getAllEnrollments()
-        getAllUsers()
-        getAllCourses()
-        getAllLessons()
+        initializeData()
     }, [])
+
+    // Listen for enrollment updates and authentication changes
+    useEffect(() => {
+        const handleEnrollmentUpdate = () => {
+            if (AuthService.isAdmin()) {
+                getAllEnrollments()
+            } else if (currentUser) {
+                getUserEnrollments()
+            }
+        }
+
+        const handleAuthChange = () => {
+            // Clear data and reinitialize when auth changes
+            setEnrollments([])
+            setFilteredEnrollments([])
+            setCurrentUser(null)
+            initializeData()
+        }
+        
+        // Listen for custom enrollment events
+        window.addEventListener('enrollmentUpdated', handleEnrollmentUpdate)
+        // Listen for authentication changes
+        window.addEventListener('authChanged', handleAuthChange)
+        
+        return () => {
+            window.removeEventListener('enrollmentUpdated', handleEnrollmentUpdate)
+            window.removeEventListener('authChanged', handleAuthChange)
+        }
+    }, [currentUser])
+
+    // Watch for username changes to detect user switches
+    useEffect(() => {
+        const currentUsername = AuthService.getUsername()
+        if (currentUser && currentUser.username !== currentUsername) {
+            // User has switched, reinitialize
+            initializeData()
+        }
+    }, [currentUser])
 
     useEffect(() => {
         const filtered = enrollments.filter(enrollment => {
-            const user = users.find(u => u.userId == enrollment.userId)
             const course = courses.find(c => c.courseId == enrollment.courseId)
-            return (
-                (user && user.username && user.username.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                (course && course.title && course.title.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                (course && course.courseId && course.courseId.toString().includes(searchTerm))
-            )
+            const user = users.find(u => u.userId == enrollment.userId)
+            
+            if (AuthService.isAdmin()) {
+                // Admin can search by user, course, or IDs
+                return (
+                    (user && user.username && user.username.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                    (course && course.title && course.title.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                    (course && course.courseId && course.courseId.toString().includes(searchTerm)) ||
+                    (enrollment.userId && enrollment.userId.toString().includes(searchTerm))
+                )
+            } else {
+                // Regular users can only search by course
+                return (
+                    (course && course.title && course.title.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                    (course && course.courseId && course.courseId.toString().includes(searchTerm))
+                )
+            }
         });
         setFilteredEnrollments(sortEnrollments(filtered));
-    }, [enrollments, searchTerm, users, courses, sortField, sortOrder])
+    }, [enrollments, searchTerm, courses, users, sortField, sortOrder])
 
     useEffect(() => {
         if (selectedEnrollmentId) {
@@ -52,18 +101,72 @@ const ListEnrollmentComponent = () => {
         }
     }, [selectedEnrollmentId, enrollments])
 
-    const getAllEnrollments = () => {
-        EnrollmentService.getAllEnrollments()
-            .then((response) => {
-                setEnrollments(response.data)
-            })
-            .catch((error) => {
-                console.log(error)
-            })
+    const initializeData = async () => {
+        try {
+            setLoading(true)
+            
+            // Get current user info
+            const username = AuthService.getUsername()
+            if (!username) {
+                console.error('No username found in auth service')
+                setLoading(false)
+                return
+            }
+
+            // Get user details by username
+            const userResponse = await UserService.getUserByUsername(username)
+            const user = userResponse.data
+            setCurrentUser(user)
+
+            // Load courses, lessons, and users for display purposes
+            await Promise.all([
+                getAllCourses(),
+                getAllLessons(),
+                AuthService.isAdmin() ? getAllUsers() : Promise.resolve()
+            ])
+
+            // Get enrollments based on user role
+            if (AuthService.isAdmin()) {
+                await getAllEnrollments()
+            } else {
+                await getUserEnrollments(user.userId)
+            }
+            
+        } catch (error) {
+            console.error('Error initializing data:', error)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const getUserEnrollments = async (userId = null) => {
+        try {
+            const userIdToUse = userId || currentUser?.userId
+            if (!userIdToUse) {
+                console.error('No user ID available')
+                return
+            }
+
+            const response = await EnrollmentService.getUserEnrollments(userIdToUse)
+            setEnrollments(response.data)
+        } catch (error) {
+            console.error('Error fetching user enrollments:', error)
+            setEnrollments([])
+        }
+    }
+
+    const getAllEnrollments = async () => {
+        try {
+            const response = await EnrollmentService.getAllEnrollments()
+            setEnrollments(response.data)
+        } catch (error) {
+            console.error('Error fetching all enrollments:', error)
+            setEnrollments([])
+        }
     }
 
     const getAllUsers = () => {
-        UserService.getAllUsers()
+        return UserService.getAllUsers()
             .then((response) => {
                 setUsers(response.data)
             })
@@ -73,7 +176,7 @@ const ListEnrollmentComponent = () => {
     }
 
     const getAllCourses = () => {
-        CourseService.getAllCourses()
+        return CourseService.getAllCourses()
             .then((response) => {
                 setCourses(response.data)
             })
@@ -83,7 +186,7 @@ const ListEnrollmentComponent = () => {
     }
 
     const getAllLessons = () => {
-        LessonService.getAllLessons()
+        return LessonService.getAllLessons()
             .then((response) => {
                 setLessons(response.data)
             })
@@ -93,10 +196,18 @@ const ListEnrollmentComponent = () => {
     }
 
     const deleteEnrollment = (enrollmentId) => {
-        if (window.confirm('Are you sure you want to delete this enrollment?')) {
+        const confirmMessage = AuthService.isAdmin() 
+            ? 'Are you sure you want to delete this enrollment?' 
+            : 'Are you sure you want to unenroll from this course?'
+            
+        if (window.confirm(confirmMessage)) {
             EnrollmentService.deleteEnrollment(enrollmentId)
                 .then(() => {
-                    getAllEnrollments()
+                    if (AuthService.isAdmin()) {
+                        getAllEnrollments()
+                    } else {
+                        getUserEnrollments()
+                    }
                 })
                 .catch((error) => {
                     console.log(error)
@@ -154,19 +265,30 @@ const ListEnrollmentComponent = () => {
         <div className="list-page-container">
             <div className="container">
                 <div className="list-header d-flex justify-content-between align-items-center mb-4">
-                    <h2 className="list-title mb-0">Enrollments</h2>
-                    <Link to="/add-enrollment" className="btn btn-success btn-lg add-button" title="Add a new enrollment">
-                        <i className="fas fa-plus me-2"></i>Add Enrollment
-                    </Link>
+                    <h2 className="list-title mb-0">{AuthService.isAdmin() ? 'All Enrollments' : 'My Enrollments'}</h2>
+                    {AuthService.isAdmin() && (
+                        <Link to="/add-enrollment" className="btn btn-success btn-lg add-button" title="Add a new enrollment">
+                            <i className="fas fa-plus me-2"></i>Add Enrollment
+                        </Link>
+                    )}
                 </div>
 
-                {enrollments.length > 0 && (
+                {loading && (
+                    <div className="text-center py-5">
+                        <div className="spinner-border" role="status">
+                            <span className="visually-hidden">Loading...</span>
+                        </div>
+                        <p className="mt-2">{AuthService.isAdmin() ? 'Loading all enrollments...' : 'Loading your enrollments...'}</p>
+                    </div>
+                )}
+
+                {!loading && enrollments.length > 0 && (
                     <>
                         <div className="search-container mb-4">
                             <input
                                 type="text"
                                 className="form-control"
-                                placeholder="Search by user or course..."
+                                placeholder={AuthService.isAdmin() ? "Search by user, course, or ID..." : "Search your courses..."}
                                 value={searchTerm}
                                 onChange={handleSearchChange}
                                 style={{paddingRight: '8rem'}}
@@ -223,8 +345,8 @@ const ListEnrollmentComponent = () => {
                                 </div>
                                 <div className="user-info-section">
                                     <h2 className="user-name">
-                                        <i className="fas fa-user-graduate me-2"></i>
-                                        {users.find(u => u.userId == selectedEnrollment.userId)?.username || 'User'} - {courses.find(c => c.courseId == selectedEnrollment.courseId)?.title || 'Course'}
+                                        <i className="fas fa-book me-2"></i>
+                                        {courses.find(c => c.courseId == selectedEnrollment.courseId)?.title || 'Course'}
                                     </h2>
                                     <div className="user-details-grid">
                                         <div className="detail-item">
@@ -232,17 +354,13 @@ const ListEnrollmentComponent = () => {
                                                 <i className="fas fa-user"></i>
                                             </div>
                                             <div className="detail-content">
-                                                <span className="detail-label">User</span>
-                                                <span className="detail-value">{users.find(u => u.userId == selectedEnrollment.userId)?.username || 'User'}</span>
-                                            </div>
-                                        </div>
-                                        <div className="detail-item">
-                                            <div className="detail-icon">
-                                                <i className="fas fa-hashtag"></i>
-                                            </div>
-                                            <div className="detail-content">
-                                                <span className="detail-label">User ID</span>
-                                                <span className="detail-value">{selectedEnrollment.userId}</span>
+                                                <span className="detail-label">Student</span>
+                                                <span className="detail-value">
+                                                    {AuthService.isAdmin() 
+                                                        ? (users.find(u => u.userId == selectedEnrollment.userId)?.username || 'User')
+                                                        : (currentUser?.username || 'User')
+                                                    }
+                                                </span>
                                             </div>
                                         </div>
                                         <div className="detail-item">
@@ -286,13 +404,30 @@ const ListEnrollmentComponent = () => {
                     </Modal>
                 )}
 
-                {filteredEnrollments.length === 0 ? (
+                {!loading && filteredEnrollments.length === 0 && (
                     <div className="empty-state text-center py-5">
                         <i className="fas fa-user-graduate fa-3x text-muted mb-3"></i>
-                        <h4 className="empty-title">{searchTerm ? 'No enrollments match your search' : 'No enrollments available'}</h4>
-                        <p className="empty-text">{searchTerm ? 'Try adjusting your search terms.' : 'Start by adding your first enrollment!'}</p>
+                        <h4 className="empty-title">
+                            {searchTerm 
+                                ? 'No enrollments match your search' 
+                                : (AuthService.isAdmin() ? 'No enrollments found' : 'You are not enrolled in any courses yet')
+                            }
+                        </h4>
+                        <p className="empty-text">
+                            {searchTerm 
+                                ? 'Try adjusting your search terms.' 
+                                : (AuthService.isAdmin() ? 'No students have enrolled in courses yet.' : 'Browse available courses to get started!')
+                            }
+                        </p>
+                        {!searchTerm && !AuthService.isAdmin() && (
+                            <Link to="/courses" className="btn btn-primary mt-3">
+                                <i className="fas fa-book me-2"></i>Browse Courses
+                            </Link>
+                        )}
                     </div>
-                ) : (
+                )}
+
+                {!loading && filteredEnrollments.length > 0 && (
                     <>
                         <div className="list-card-container">
                             {filteredEnrollments.slice(0, visibleCount).map(enrollment => (
@@ -304,45 +439,64 @@ const ListEnrollmentComponent = () => {
                                     </div>
                                     <div className="user-card-body">
                                         <h5 className="card-title">
-                                            <i className="fas fa-user-graduate me-2"></i>
-                                            {users.find(u => u.userId == enrollment.userId)?.username || 'User'} - {courses.find(c => c.courseId == enrollment.courseId)?.title || 'Course'}
+                                            <i className="fas fa-book me-2"></i>
+                                            {courses.find(c => c.courseId == enrollment.courseId)?.title || 'Course'}
                                         </h5>
                                         <div className="user-card-info">
+                                            {AuthService.isAdmin() && (
+                                                <div className="info-item">
+                                                    <i className="fas fa-user"></i>
+                                                    <span className="info-label">Student</span>
+                                                    <span className="info-value">{users.find(u => u.userId == enrollment.userId)?.username || 'User'}</span>
+                                                </div>
+                                            )}
                                             <div className="info-item">
-                                                <i className="fas fa-book"></i>
-                                                <span className="info-label">Course</span>
-                                                <span className="info-value">{courses.find(c => c.courseId == enrollment.courseId)?.title || 'Course'}</span>
+                                                <i className="fas fa-calendar-plus"></i>
+                                                <span className="info-label">Enrolled</span>
+                                                <span className="info-value">{new Date(enrollment.enrollmentDate).toLocaleDateString()}</span>
                                             </div>
                                         </div>
                                         <div className="user-card-meta">
                                             <div className="meta-item">
                                                 <i className="fas fa-hashtag"></i>
-                                                <span>ID: {enrollment.enrollmentId}</span>
+                                                <span>Course ID: {enrollment.courseId}</span>
                                             </div>
-                                            <div className="meta-item">
-                                                <i className="fas fa-calendar-plus"></i>
-                                                <span>Enrolled: {new Date(enrollment.enrollmentDate).toLocaleDateString()}</span>
-                                            </div>
+                                            {AuthService.isAdmin() && (
+                                                <div className="meta-item">
+                                                    <i className="fas fa-hashtag"></i>
+                                                    <span>User ID: {enrollment.userId}</span>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                     <div className="card-actions mt-3 d-flex gap-2">
                                         <Link
                                             className="btn btn-outline-primary btn-sm flex-fill"
-                                            to={`/edit-enrollment/${enrollment.enrollmentId}`}
-                                            title="Edit this enrollment"
+                                            to={`/courses/${enrollment.courseId}`}
+                                            title="View course details"
                                             onClick={(e) => e.stopPropagation()}
                                         >
-                                            <i className="fas fa-edit me-1"></i>Edit
+                                            <i className="fas fa-eye me-1"></i>View Course
                                         </Link>
+                                        {AuthService.isAdmin() && (
+                                            <Link
+                                                className="btn btn-outline-secondary btn-sm flex-fill"
+                                                to={`/edit-enrollment/${enrollment.enrollmentId}`}
+                                                title="Edit this enrollment"
+                                                onClick={(e) => e.stopPropagation()}
+                                            >
+                                                <i className="fas fa-edit me-1"></i>Edit
+                                            </Link>
+                                        )}
                                         <button
                                             className="btn btn-outline-danger btn-sm flex-fill"
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 deleteEnrollment(enrollment.enrollmentId);
                                             }}
-                                            title="Delete this enrollment"
+                                            title="Unenroll from this course"
                                         >
-                                            <i className="fas fa-trash me-1"></i>Delete
+                                            <i className="fas fa-times me-1"></i>Unenroll
                                         </button>
                                     </div>
                                 </div>

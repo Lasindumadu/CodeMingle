@@ -8,6 +8,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -26,6 +28,10 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "quizzes")
 public class Quiz {
+
+    public enum Difficulty {
+        EASY, MEDIUM, HARD
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -47,6 +53,10 @@ public class Quiz {
 
     @Column(name = "time_limit_minutes", nullable = false)
     private Integer timeLimitMinutes = 30; // Default 30 minutes
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "difficulty", nullable = false)
+    private Difficulty difficulty = Difficulty.MEDIUM;
 
     @OneToMany(mappedBy = "quiz", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Question> questions;

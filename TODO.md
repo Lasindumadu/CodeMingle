@@ -1,22 +1,17 @@
-# TODO: Update Course Card Effects and Remove Box Top
+# Quiz Tick Mark and Shuffle Fix TODO
 
-## Steps to Complete
+## Overview
+Fixing the tick mark visibility issue in quiz taking (add visual check icon on option selection) while confirming shuffle functionality. Add/update quiz features are already implemented.
 
-1. **Remove Box Top from Course Cards**
-   - Edit `ListCourseComponent.js` to remove the `user-card-header` div containing the avatar icon.
+## Steps
+- [x] Edit codemingle-frontend/src/components/QuizTakingComponent.js: Add a conditional check icon (<i className="fas fa-check option-check">) in the option-label for selected options when !isSubmitted (pre-submission feedback).
+- [x] Position the icon at the end of the label (using margin-left: auto via CSS class or inline).
+- [x] Ensure icon is white on selected background for visibility.
+- [ ] Test: Run frontend, take a quiz, select options, verify tick appears. Confirm shuffle randomizes questions if enabled.
+- [x] No changes needed for AddQuizComponent.js (shuffle toggle already works for add/update).
+- [x] Mark this step complete and update TODO.md.
+- [ ] If issues, investigate QuizService.js or backend.
 
-2. **Update Course Card Effects to Match User Cards**
-   - Edit `ListComponents.css` to apply user card-like styles to `.list-card` (course cards), including:
-     - Change background to gradient similar to user cards.
-     - Adjust hover effects for consistency (e.g., glass morphism, animations).
-     - Ensure other elements align with user card styles.
-
-3. **Test Changes**
-   - Run the frontend application.
-   - Verify course cards display without the top header and have effects matching user cards.
-   - Check for layout issues or visual inconsistencies.
-
-## Progress
-- [ ] Step 1: Remove box top from course cards
-- [ ] Step 2: Update CSS for matching effects
-- [ ] Step 3: Test the changes
+## Notes
+- Keep radio input visible for accessibility.
+- After JS edit, restart dev server if needed (npm start in frontend dir).

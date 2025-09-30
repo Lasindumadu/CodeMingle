@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import QuizService from '../services/QuizService'
+import LessonService from '../services/LessonService'
 import PdfService from '../services/PdfService'
 import './QuizTakingComponent.css'
 
@@ -18,6 +19,9 @@ const QuizTakingComponent = () => {
     const [shuffledQuestions, setShuffledQuestions] = useState([])
     const [showAnswers, setShowAnswers] = useState(false)
     const [quizStarted, setQuizStarted] = useState(false)
+    const [relatedQuizzes, setRelatedQuizzes] = useState([])
+    const [lesson, setLesson] = useState(null)
+    const [renderKey, setRenderKey] = useState(0)
 
     useEffect(() => {
         if (id) {
@@ -26,19 +30,37 @@ const QuizTakingComponent = () => {
     }, [id])
 
     useEffect(() => {
+        if (quiz && quiz.lessonId) {
+            fetchRelatedContent()
+        }
+    }, [quiz])
+
+    // Fisher-Yates shuffle algorithm for better randomization
+    const shuffleArray = (array) => {
+        const shuffled = [...array]
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1))
+            ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+        }
+        return shuffled
+    }
+
+    useEffect(() => {
         if (quiz && quiz.questions) {
             // Shuffle questions if enabled
             const questions = [...quiz.questions]
             if (quiz.shuffleQuestions) {
-                questions.sort(() => Math.random() - 0.5)
+                setShuffledQuestions(shuffleArray(questions))
+            } else {
+                questions.sort((a, b) => a.questionOrder - b.questionOrder)
+                setShuffledQuestions(questions)
             }
-            setShuffledQuestions(questions.sort((a, b) => a.questionOrder - b.questionOrder))
             setTotalQuestions(questions.length)
-            
+
             // Set timer based on quiz time limit (convert minutes to seconds)
             const timeLimitSeconds = (quiz.timeLimitMinutes || 30) * 60
             setTimeLeft(timeLimitSeconds)
-            
+
             // CRITICAL: Ensure showAnswers is false when quiz loads
             setShowAnswers(false)
             setIsSubmitted(false)
@@ -78,11 +100,32 @@ const QuizTakingComponent = () => {
         }
     }
 
+    const fetchRelatedContent = async () => {
+        try {
+            // Fetch the lesson this quiz belongs to
+            const lessonResponse = await LessonService.getLessonById(quiz.lessonId)
+            setLesson(lessonResponse.data)
+
+            // Fetch other quizzes from the same lesson
+            const relatedQuizzesResponse = await QuizService.getQuizzesByLessonId(quiz.lessonId)
+            const allQuizzesInLesson = relatedQuizzesResponse.data
+
+            // Filter out the current quiz
+            const filteredQuizzes = allQuizzesInLesson.filter(q => q.quizId !== quiz.quizId)
+            setRelatedQuizzes(filteredQuizzes)
+        } catch (error) {
+            console.error('Error fetching related content:', error)
+            // Don't set error state for related content, just log it
+        }
+    }
+
     const handleAnswerChange = (questionId, answer) => {
+        console.log('Answer updated for', questionId, answer)
         setAnswers(prev => ({
             ...prev,
             [questionId]: answer
         }))
+        setRenderKey(prev => prev + 1)
     }
 
     const calculateScore = () => {
@@ -172,6 +215,16 @@ const QuizTakingComponent = () => {
     const handleDownloadPDF = () => {
         if (quiz && shuffledQuestions.length > 0) {
             PdfService.downloadQuizResults(quiz, shuffledQuestions, answers, score, totalQuestions)
+        }
+    }
+
+    const scrollToQuestion = (questionId) => {
+        const questionElement = document.getElementById(`question-${questionId}`)
+        if (questionElement) {
+            questionElement.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            })
         }
     }
 
@@ -286,31 +339,145 @@ const QuizTakingComponent = () => {
         return null
     }
 
+    // Debug: Log sidebar visibility
+    console.log('Quiz started:', quizStarted)
+    console.log('Questions count:', shuffledQuestions.length)
+
     return (
         <div className="quiz-container">
-            <div className="container">
-                {/* Quiz Header */}
-                <div className="quiz-header">
-                    <div className="row align-items-center">
-                        <div className="col-md-8">
-                            <h1 className="quiz-title">
-                                <i className="fas fa-brain me-2"></i>
-                                {quiz.title}
-                            </h1>
-                            <p className="quiz-description">{quiz.description}</p>
-                        </div>
-                        <div className="col-md-4 text-end">
-                            {!isSubmitted && (
-                                <div className="quiz-timer">
-                                    <i className="fas fa-clock me-2"></i>
-                                    <span className={`timer-display ${timeLeft < 300 ? 'text-danger' : ''}`}>
-                                        {formatTime(timeLeft)}
-                                    </span>
+            <div className="container-fluid">
+                <div className="row">
+                    {/* Quiz Navigation Sidebar */}
+                    <div className="col-md-3">
+                        <div className="quiz-sidebar bg-light p-3">
+                            <h5 className="mb-3 text-primary fw-bold">
+                                <i className="fas fa-compass me-2"></i>Quiz Navigator
+                            </h5>
+                            <div className="quiz-nav-container">
+                                {shuffledQuestions.map((question, index) => {
+                                    const questionId = question.questionId;
+                                    const isAnswered = answers[questionId] !== undefined;
+                                    const isCurrentQuestion = index === 0; // We'll implement current question tracking
+
+                                    return (
+                                        <div
+                                            key={`${questionId}-${renderKey}`}
+                                            className={`quiz-nav-item mb-2 ${isAnswered ? 'answered' : 'unanswered'} ${isCurrentQuestion ? 'current' : ''}`}
+                                            onClick={() => scrollToQuestion(questionId)}
+                                            style={{ cursor: 'pointer' }}
+                                        >
+                                            <div className="quiz-nav-question">
+                                                <span className="question-number-badge">
+                                                    {index + 1}
+                                                </span>
+                                                <div className="question-status-icon">
+                                                    {isAnswered ? (
+                                                        <i className="fas fa-check text-success"></i>
+                                                    ) : (
+                                                        <i className="fas fa-circle text-muted"></i>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Quiz Progress Summary */}
+                            <div className="quiz-progress-summary mt-4 p-3 bg-white rounded">
+                                <h6 className="text-center mb-3">Progress</h6>
+                                <div className="progress-stats">
+                                    <div className="stat-row">
+                                        <span>Answered:</span>
+                                        <span className="text-success fw-bold">
+                                            {Object.keys(answers).length}/{totalQuestions}
+                                        </span>
+                                    </div>
+                                    <div className="stat-row">
+                                        <span>Remaining:</span>
+                                        <span className="text-warning fw-bold">
+                                            {totalQuestions - Object.keys(answers).length}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Quick Links */}
+                            {(lesson || relatedQuizzes.length > 0) && (
+                                <div className="quiz-quick-links mt-4 p-3 bg-white rounded">
+                                    <h6 className="text-center mb-3 text-info">
+                                        <i className="fas fa-link me-2"></i>Quick Links
+                                    </h6>
+
+                                    {/* Lesson Link */}
+                                    {lesson && (
+                                        <div className="quick-link-item mb-3">
+                                            <div className="quick-link-header">
+                                                <i className="fas fa-book text-success me-2"></i>
+                                                <strong>Related Lesson:</strong>
+                                            </div>
+                                            <Link
+                                                to={`/lessons?selected=${lesson.lessonId}`}
+                                                className="btn btn-outline-success btn-sm w-100 mt-1"
+                                                title="View the lesson this quiz belongs to"
+                                            >
+                                                <i className="fas fa-external-link-alt me-1"></i>
+                                                {lesson.title}
+                                            </Link>
+                                        </div>
+                                    )}
+
+                                    {/* Related Quizzes */}
+                                    {relatedQuizzes.length > 0 && (
+                                        <div className="quick-link-item">
+                                            <div className="quick-link-header">
+                                                <i className="fas fa-brain text-primary me-2"></i>
+                                                <strong>Other Quizzes in Lesson:</strong>
+                                            </div>
+                                            <div className="related-quizzes-list mt-2">
+                                                {relatedQuizzes.map(relatedQuiz => (
+                                                    <Link
+                                                        key={relatedQuiz.quizId}
+                                                        to={`/take-quiz/${relatedQuiz.quizId}`}
+                                                        className="btn btn-outline-primary btn-sm w-100 mb-1"
+                                                        title={`Take quiz: ${relatedQuiz.title}`}
+                                                    >
+                                                        <i className="fas fa-play me-1"></i>
+                                                        {relatedQuiz.title}
+                                                    </Link>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>
                     </div>
-                </div>
+
+                    {/* Main Quiz Content */}
+                    <div className="col-md-9">
+                        {/* Quiz Header */}
+                        <div className="quiz-header">
+                            <div className="row align-items-center">
+                                <div className="col-md-8">
+                                    <h1 className="quiz-title">
+                                        <i className="fas fa-brain me-2"></i>
+                                        {quiz.title}
+                                    </h1>
+                                    <p className="quiz-description">{quiz.description}</p>
+                                </div>
+                                <div className="col-md-4 text-end">
+                                    {!isSubmitted && (
+                                        <div className="quiz-timer">
+                                            <i className="fas fa-clock me-2"></i>
+                                            <span className={`timer-display ${timeLeft < 300 ? 'text-danger' : ''}`}>
+                                                {formatTime(timeLeft)}
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
 
                 {/* Quiz Progress */}
                 {!isSubmitted && (
@@ -376,7 +543,7 @@ const QuizTakingComponent = () => {
                 {/* Quiz Questions */}
                 <div className="quiz-questions">
                     {shuffledQuestions.map((question, index) => (
-                        <div key={question.questionId} className="question-card">
+                        <div key={question.questionId} id={`question-${question.questionId}`} className="question-card">
                             <div className="question-header">
                                 <h3 className="question-number">
                                     Question {index + 1} of {totalQuestions}
@@ -438,6 +605,9 @@ const QuizTakingComponent = () => {
                                                     />
                                                     <span className="option-letter">{option}.</span>
                                                     <span className="option-text">{optionText}</span>
+                                                    {isSelected && !isSubmitted && (
+                                                        <i className="fas fa-check option-check" style={{ color: 'white', marginLeft: 'auto' }}></i>
+                                                    )}
                                                     {showCorrectAnswer && (
                                                         <i className="fas fa-check option-check"></i>
                                                     )}
@@ -483,14 +653,19 @@ const QuizTakingComponent = () => {
                             <Link to="/quizzes" className="btn btn-outline-primary">
                                 <i className="fas fa-list me-2"></i>View All Quizzes
                             </Link>
-                            <button 
-                                className="btn btn-primary"
+                            <button
+                                className="btn btn-success"
                                 onClick={() => window.location.reload()}
                             >
                                 <i className="fas fa-redo me-2"></i>Retake Quiz
                             </button>
+                            <Link to="/quizzes" className="btn btn-outline-secondary">
+                                <i className="fas fa-arrow-left me-2"></i>Back to Quiz Page
+                            </Link>
                         </div>
                     )}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

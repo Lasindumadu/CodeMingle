@@ -268,6 +268,23 @@ const AddLessonComponent = () => {
                                                         init={{
                                                             height: 420,
                                                             menubar: true,
+                                                            skin: 'oxide-dark',
+                                                            setup: (editor) => {
+                                                                editor.on('init', () => {
+                                                                    const style = document.createElement('style');
+                                                                    style.textContent = `
+                                                                      .tox .tox-menubar .tox-mbtn:hover {
+                                                                        background-color: #555 !important;
+                                                                        color: #fff !important;
+                                                                      }
+                                                                      .tox .tox-menubar .tox-mbtn--active {
+                                                                        background-color: #666 !important;
+                                                                        color: #fff !important;
+                                                                      }
+                                                                    `;
+                                                                    document.head.appendChild(style);
+                                                                });
+                                                            },
                                                             plugins: [
                                                                 'advlist', 'autolink', 'lists', 'link', 'image', 'media',
                                                                 'charmap', 'preview', 'anchor', 'searchreplace', 'visualblocks',

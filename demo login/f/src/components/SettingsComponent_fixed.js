@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import authService from '../services/AuthService';
-import './SettingsComponent.css';
 
 const SettingsComponent = () => {
   const { user, isAuthenticated, logout } = useAuth();
@@ -122,7 +121,7 @@ const SettingsComponent = () => {
   }
 
   return (
-    <div className="container mt-4 settings-container">
+    <div className="container mt-4">
       <div className="row">
         <div className="col-md-10 mx-auto">
           <h2 className="mb-4">Settings</h2>
@@ -142,7 +141,7 @@ const SettingsComponent = () => {
           )}
 
           {/* Appearance Settings */}
-          <div className="card settings-card mb-4">
+          <div className="card mb-4">
             <div className="card-header">
               <h5 className="mb-0">
                 <i className="fas fa-palette me-2"></i>Appearance
@@ -150,7 +149,7 @@ const SettingsComponent = () => {
             </div>
             <div className="card-body">
               <div className="row">
-                <div className="col-md-3">
+                <div className="col-md-4">
                   <div className="mb-3">
                     <label className="form-label">Theme</label>
                     <select 
@@ -164,7 +163,7 @@ const SettingsComponent = () => {
                     </select>
                   </div>
                 </div>
-                <div className="col-md-3">
+                <div className="col-md-4">
                   <div className="mb-3">
                     <label className="form-label">Font Size</label>
                     <select 
@@ -178,7 +177,7 @@ const SettingsComponent = () => {
                     </select>
                   </div>
                 </div>
-                <div className="col-md-3">
+                <div className="col-md-4">
                   <div className="mb-3">
                     <label className="form-label">Language</label>
                     <select 
@@ -193,65 +192,12 @@ const SettingsComponent = () => {
                     </select>
                   </div>
                 </div>
-                <div className="col-md-3">
-                  <div className="mb-3">
-                    <label className="form-label">Dark Mode Style</label>
-                    <select 
-                      className="form-select" 
-                      value={formSettings.darkModeVariant || 'default'} 
-                      onChange={(e) => handleSettingChange('darkModeVariant', e.target.value)}
-                      disabled={formSettings.theme === 'light'}
-                    >
-                      <option value="default">Default Dark</option>
-                      <option value="midnight">Midnight Blue</option>
-                      <option value="charcoal">Charcoal</option>
-                      <option value="purple">Purple Haze</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="row">
-                <div className="col-md-6">
-                  <div className="form-check mb-3">
-                    <input
-                      className="form-check-input"
-                      type="checkbox"
-                      id="reducedMotion"
-                      checked={formSettings.reducedMotion || false}
-                      onChange={(e) => handleSettingChange('reducedMotion', e.target.checked)}
-                    />
-                    <label className="form-check-label" htmlFor="reducedMotion">
-                      Reduce Motion & Animations
-                    </label>
-                    <small className="form-text text-muted d-block">
-                      Minimizes animations for better accessibility
-                    </small>
-                  </div>
-                </div>
-                <div className="col-md-6">
-                  <div className="form-check mb-3">
-                    <input
-                      className="form-check-input"
-                      type="checkbox"
-                      id="highContrast"
-                      checked={formSettings.highContrast || false}
-                      onChange={(e) => handleSettingChange('highContrast', e.target.checked)}
-                    />
-                    <label className="form-check-label" htmlFor="highContrast">
-                      High Contrast Mode
-                    </label>
-                    <small className="form-text text-muted d-block">
-                      Increases contrast for better visibility
-                    </small>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
 
           {/* Notification Settings */}
-          <div className="card settings-card mb-4">
+          <div className="card mb-4">
             <div className="card-header">
               <h5 className="mb-0">
                 <i className="fas fa-bell me-2"></i>Notifications
@@ -328,7 +274,7 @@ const SettingsComponent = () => {
           </div>
 
           {/* Privacy Settings */}
-          <div className="card settings-card mb-4">
+          <div className="card mb-4">
             <div className="card-header">
               <h5 className="mb-0">
                 <i className="fas fa-shield-alt me-2"></i>Privacy
@@ -381,7 +327,7 @@ const SettingsComponent = () => {
           </div>
 
           {/* Learning Preferences */}
-          <div className="card settings-card mb-4">
+          <div className="card mb-4">
             <div className="card-header">
               <h5 className="mb-0">
                 <i className="fas fa-graduation-cap me-2"></i>Learning Preferences
@@ -437,7 +383,7 @@ const SettingsComponent = () => {
           </div>
 
           {/* Data & Account Management */}
-          <div className="card settings-card mb-4">
+          <div className="card mb-4">
             <div className="card-header">
               <h5 className="mb-0">
                 <i className="fas fa-database me-2"></i>Data & Account Management

@@ -2,10 +2,12 @@ import React, {useState, useEffect} from 'react'
 import { Link } from 'react-router-dom'
 import QuizService from '../services/QuizService'
 import PdfService from '../services/PdfService'
+import AuthService from '../services/AuthService'
+import { useAuth } from '../context/AuthContext'
 import './ListComponents.css'
 
 const ListQuizComponent = () => {
-
+    const { user: currentUser, isAuthenticated, isAdmin } = useAuth()
     const [quizzes, setQuizzes] = useState([])
     const [filteredQuizzes, setFilteredQuizzes] = useState([])
     const [searchTerm, setSearchTerm] = useState('')
@@ -55,6 +57,83 @@ const ListQuizComponent = () => {
             console.error('Error downloading PDF:', error)
             alert('Error downloading PDF. Please try again.')
         }
+    }
+
+    const handlePrintResults = async (quizId) => {
+        try {
+            const completionData = getCompletionData(quizId)
+            if (!completionData) return
+
+            // Fetch the quiz details to get questions
+            const response = await QuizService.getQuizById(quizId)
+            const quiz = response.data
+            
+            // Create a printable results page
+            const printWindow = window.open('', '_blank')
+            printWindow.document.write(`
+                <html>
+                    <head>
+                        <title>Quiz Results - ${quiz.title}</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; margin: 20px; }
+                            .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px; }
+                            .result-summary { background: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+                            .grade { font-size: 24px; font-weight: bold; color: #28a745; }
+                            .details { margin-top: 20px; }
+                            .detail-row { margin: 10px 0; }
+                            @media print { body { margin: 0; } }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="header">
+                            <h1>Quiz Results</h1>
+                            <h2>${quiz.title}</h2>
+                        </div>
+                        <div class="result-summary">
+                            <div class="grade">Grade: ${completionData.grade} (${completionData.percentage}%)</div>
+                            <div class="details">
+                                <div class="detail-row"><strong>Score:</strong> ${completionData.score} out of ${completionData.totalQuestions}</div>
+                                <div class="detail-row"><strong>Completion Date:</strong> ${new Date(completionData.completedAt).toLocaleDateString()}</div>
+                                <div class="detail-row"><strong>Quiz ID:</strong> ${quiz.quizId}</div>
+                                <div class="detail-row"><strong>Lesson ID:</strong> ${quiz.lessonId}</div>
+                            </div>
+                        </div>
+                        <div class="description">
+                            <h3>Quiz Description:</h3>
+                            <p>${quiz.description}</p>
+                        </div>
+                    </body>
+                </html>
+            `)
+            printWindow.document.close()
+            printWindow.print()
+        } catch (error) {
+            console.error('Error printing results:', error)
+            alert('Error printing results. Please try again.')
+        }
+    }
+
+    const handleViewHistory = (quizId) => {
+        const completionData = getCompletionData(quizId)
+        if (!completionData) {
+            alert('No quiz history found. Take the quiz first!')
+            return
+        }
+
+        // Create a modal or alert showing quiz history
+        const historyDetails = `
+Quiz History Details:
+
+Quiz ID: ${quizId}
+Completion Date: ${new Date(completionData.completedAt).toLocaleDateString()}
+Score: ${completionData.score} out of ${completionData.totalQuestions}
+Percentage: ${completionData.percentage}%
+Grade: ${completionData.grade}
+Time Taken: ${completionData.timeTaken || 'Not recorded'}
+
+You can download or print your results using the respective buttons.
+        `
+        alert(historyDetails)
     }
 
     useEffect(() => {
@@ -131,9 +210,11 @@ const ListQuizComponent = () => {
             <div className="container">
                 <div className="list-header d-flex justify-content-between align-items-center mb-4">
                     <h2 className="list-title mb-0">Quizzes</h2>
-                    <Link to="/add-quiz" className="btn btn-success btn-lg add-button" title="Add a new quiz">
-                        <i className="fas fa-plus me-2"></i>Add Quiz
-                    </Link>
+                    {isAdmin() && (
+                        <Link to="/add-quiz" className="btn btn-success btn-lg add-button" title="Add a new quiz">
+                            <i className="fas fa-plus me-2"></i>Add Quiz
+                        </Link>
+                    )}
                 </div>
 
                 {quizzes.length > 0 && (
@@ -213,6 +294,16 @@ const ListQuizComponent = () => {
                                             <p className="mb-2">
                                                 <strong>Lesson ID:</strong> {quiz.lessonId}
                                             </p>
+                                            <div className="quiz-meta-badges mb-3">
+                                                <span className="badge bg-warning">
+                                                    <i className="fas fa-clock me-1"></i>
+                                                    {quiz.timeLimitMinutes || 30} min
+                                                </span>
+                                                <span className="badge bg-success">
+                                                    <i className="fas fa-question-circle me-1"></i>
+                                                    {quiz.questions ? quiz.questions.length : 0} questions
+                                                </span>
+                                            </div>
                                             <p className="mb-3">
                                                 <strong>Description:</strong>
                                                 <br />
@@ -222,46 +313,80 @@ const ListQuizComponent = () => {
                                             </p>
                                         </div>
                                         <div className="card-actions mt-auto d-flex gap-2 flex-wrap">
-                                            <Link
-                                                className="btn btn-success btn-sm flex-fill"
-                                                to={`/take-quiz/${quiz.quizId}`}
-                                                title="Take this quiz"
-                                                onClick={(e) => e.stopPropagation()}
-                                            >
-                                                <i className="fas fa-play me-1"></i>Take Quiz
-                                            </Link>
-                                            
-                                            {isCompleted && (
-                                                <button
-                                                    className="btn btn-info btn-sm flex-fill"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleDownloadPDF(quiz.quizId);
-                                                    }}
-                                                    title="Download results PDF"
-                                                >
-                                                    <i className="fas fa-download me-1"></i>Download PDF
-                                                </button>
+                                            {isAdmin() ? (
+                                                // Admin buttons: Edit and Delete
+                                                <>
+                                                    <Link
+                                                        className="btn btn-outline-primary btn-sm flex-fill"
+                                                        to={`/edit-quiz/${quiz.quizId}`}
+                                                        title="Edit this quiz"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
+                                                        <i className="fas fa-edit me-1"></i>Edit
+                                                    </Link>
+                                                    <button
+                                                        className="btn btn-outline-danger btn-sm flex-fill"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            if (window.confirm('Are you sure you want to delete this quiz?')) {
+                                                                deleteQuiz(quiz.quizId);
+                                                            }
+                                                        }}
+                                                        title="Delete this quiz"
+                                                    >
+                                                        <i className="fas fa-trash me-1"></i>Delete
+                                                    </button>
+                                                </>
+                                            ) : (
+                                                // User buttons: Do Quiz and View History
+                                                <>
+                                                    <Link
+                                                        className="btn btn-success btn-sm flex-fill"
+                                                        to={`/take-quiz/${quiz.quizId}`}
+                                                        title="Start this quiz"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
+                                                        <i className="fas fa-play me-1"></i>Start Quiz
+                                                    </Link>
+                                                    
+                                                    <button
+                                                        className="btn btn-info btn-sm flex-fill"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleViewHistory(quiz.quizId);
+                                                        }}
+                                                        title="View quiz history and results"
+                                                    >
+                                                        <i className="fas fa-history me-1"></i>View History
+                                                    </button>
+                                                    
+                                                    {/* PDF and Print buttons for completed quizzes */}
+                                                    {isCompleted && (
+                                                        <>
+                                                            <button
+                                                                className="btn btn-outline-secondary btn-sm flex-fill"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleDownloadPDF(quiz.quizId);
+                                                                }}
+                                                                title="Download results as PDF"
+                                                            >
+                                                                <i className="fas fa-file-pdf me-1"></i>PDF
+                                                            </button>
+                                                            <button
+                                                                className="btn btn-outline-secondary btn-sm flex-fill"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handlePrintResults(quiz.quizId);
+                                                                }}
+                                                                title="Print results"
+                                                            >
+                                                                <i className="fas fa-print me-1"></i>Print
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                </>
                                             )}
-                                            
-                                            <Link
-                                                className="btn btn-outline-primary btn-sm flex-fill"
-                                                to={`/edit-quiz/${quiz.quizId}`}
-                                                title="Edit this quiz"
-                                                onClick={(e) => e.stopPropagation()}
-                                            >
-                                                <i className="fas fa-edit me-1"></i>Edit
-                                            </Link>
-                                            <button
-                                                className="btn btn-outline-danger btn-sm flex-fill"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    deleteQuiz(quiz.quizId);
-                                                }}
-                                                title="Delete this quiz"
-                                            >
-                                                <i className="fas fa-trash me-1"></i>Delete
-                                            </button>
                                         </div>
                                     </div>
                                 )

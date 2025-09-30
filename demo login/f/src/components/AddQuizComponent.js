@@ -282,11 +282,15 @@ const AddQuizComponent = () => {
                                             <div className="mb-4">
                                                 <div className="form-check">
                                                     <input
+                                                        key={shuffleQuestions ? 'checked' : 'unchecked'}
                                                         className="form-check-input"
                                                         type="checkbox"
                                                         id="shuffleQuestions"
                                                         checked={shuffleQuestions}
-                                                        onChange={(e) => setShuffleQuestions(e.target.checked)}
+                                                        onChange={(e) => {
+                                                            console.log('Shuffle checkbox changed to:', e.target.checked)
+                                                            setShuffleQuestions(e.target.checked)
+                                                        }}
                                                     />
                                                     <label className="form-check-label fw-bold" htmlFor="shuffleQuestions">
                                                         <i className="fas fa-random me-2"></i>Shuffle Questions

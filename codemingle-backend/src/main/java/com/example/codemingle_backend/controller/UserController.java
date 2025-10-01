@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.codemingle_backend.exception.ResourceNotFoundException;
 import com.example.codemingle_backend.model.User;
+import com.example.codemingle_backend.model.UserDTO;
 import com.example.codemingle_backend.repository.UserRepository;
 
 @CrossOrigin("*")
@@ -28,9 +29,21 @@ public class UserController {
     @Autowired
     private UserRepository userRepository;
 
+    private UserDTO convertToDTO(User user) {
+        return new UserDTO(
+            user.getUserId(),
+            user.getUsername(),
+            user.getEmail(),
+            user.getRole(),
+            user.getCreatedAt(),
+            user.getProfileViews(),
+            user.getRating()
+        );
+    }
+
     @GetMapping
-    public List<User> getAllUsers(){
-        return userRepository.findAll();
+    public List<UserDTO> getAllUsers(){
+        return userRepository.findAll().stream().map(this::convertToDTO).toList();
     }
 
     // build create user REST API
@@ -47,23 +60,23 @@ public class UserController {
 
     // build get user by id REST API
     @GetMapping("{id}")
-    public ResponseEntity<User> getUserById(@PathVariable  long id){
+    public ResponseEntity<UserDTO> getUserById(@PathVariable  long id){
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not exist with id:" + id));
-        return ResponseEntity.ok(user);
+        return ResponseEntity.ok(convertToDTO(user));
     }
 
     // build get user by username REST API
     @GetMapping("/username/{username}")
-    public ResponseEntity<User> getUserByUsername(@PathVariable String username){
+    public ResponseEntity<UserDTO> getUserByUsername(@PathVariable String username){
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("User not exist with username:" + username));
-        return ResponseEntity.ok(user);
+        return ResponseEntity.ok(convertToDTO(user));
     }
 
     // build update user REST API
     @PutMapping("{id}")
-    public ResponseEntity<User> updateUser(@PathVariable long id,@RequestBody User userDetails) {
+    public ResponseEntity<UserDTO> updateUser(@PathVariable long id,@RequestBody User userDetails) {
         User updateUser = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not exist with id: " + id));
 
@@ -85,24 +98,24 @@ public class UserController {
 
         userRepository.save(updateUser);
 
-        return ResponseEntity.ok(updateUser);
+        return ResponseEntity.ok(convertToDTO(updateUser));
     }
 
     // build increment profile views REST API
     @PutMapping("{id}/increment-views")
-    public ResponseEntity<User> incrementProfileViews(@PathVariable long id) {
+    public ResponseEntity<UserDTO> incrementProfileViews(@PathVariable long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not exist with id: " + id));
 
         user.setProfileViews(user.getProfileViews() + 1);
         userRepository.save(user);
 
-        return ResponseEntity.ok(user);
+        return ResponseEntity.ok(convertToDTO(user));
     }
 
     // build calculate rating REST API
     @PutMapping("{id}/calculate-rating")
-    public ResponseEntity<User> calculateRating(@PathVariable long id) {
+    public ResponseEntity<UserDTO> calculateRating(@PathVariable long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not exist with id: " + id));
 
@@ -119,7 +132,7 @@ public class UserController {
         user.setRating(calculatedRating);
         userRepository.save(user);
 
-        return ResponseEntity.ok(user);
+        return ResponseEntity.ok(convertToDTO(user));
     }
 
     // build delete user REST API

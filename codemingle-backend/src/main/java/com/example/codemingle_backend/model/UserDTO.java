@@ -1,6 +1,7 @@
 package com.example.codemingle_backend.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.time.LocalDateTime;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,8 +11,12 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class CommentCreateDTO {
+public class UserDTO {
     private Long userId;
-    private Long lessonId;
-    private String content;
+    private String username;
+    private String email;
+    private String role;
+    private LocalDateTime createdAt;
+    private Integer profileViews;
+    private Double rating;
 }

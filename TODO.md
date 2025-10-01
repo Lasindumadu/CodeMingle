@@ -1,0 +1,4 @@
+- [ ] Add countByUser method to EnrollmentRepository
+- [ ] Add findLatestScoresByUser method to QuizAttemptRepository
+- [ ] Update getUserStats method in UserController to use optimized queries
+- [ ] Test the changes and verify query optimization

@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.codemingle_backend.exception.ResourceNotFoundException;
 import com.example.codemingle_backend.model.Course;
+import com.example.codemingle_backend.model.CourseDTO;
 import com.example.codemingle_backend.repository.CourseRepository;
 
 @CrossOrigin("*")
@@ -29,8 +30,15 @@ public class CourseController {
     private CourseRepository courseRepository;
 
     @GetMapping
-    public List<Course> getAllCourses(){
-        return courseRepository.findAll();
+    public List<CourseDTO> getAllCourses(){
+        List<Course> courses = courseRepository.findAll();
+        return courses.stream().map(course -> new CourseDTO(
+            course.getCourseId(),
+            course.getTitle(),
+            course.getDescription(),
+            course.getCategory(),
+            course.getCreatedAt()
+        )).toList();
     }
 
     // build create course REST API
@@ -44,15 +52,22 @@ public class CourseController {
 
     // build get course by id REST API
     @GetMapping("{id}")
-    public ResponseEntity<Course> getCourseById(@PathVariable  long id){
+    public ResponseEntity<CourseDTO> getCourseById(@PathVariable  long id){
         Course course = courseRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Course not exist with id:" + id));
-        return ResponseEntity.ok(course);
+        CourseDTO courseDTO = new CourseDTO(
+            course.getCourseId(),
+            course.getTitle(),
+            course.getDescription(),
+            course.getCategory(),
+            course.getCreatedAt()
+        );
+        return ResponseEntity.ok(courseDTO);
     }
 
     // build update course REST API
     @PutMapping("{id}")
-    public ResponseEntity<Course> updateCourse(@PathVariable long id,@RequestBody Course courseDetails) {
+    public ResponseEntity<CourseDTO> updateCourse(@PathVariable long id,@RequestBody Course courseDetails) {
         Course updateCourse = courseRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Course not exist with id: " + id));
 
@@ -62,13 +77,24 @@ public class CourseController {
         if (courseDetails.getDescription() != null) {
             updateCourse.setDescription(courseDetails.getDescription());
         }
+        if (courseDetails.getCategory() != null) {
+            updateCourse.setCategory(courseDetails.getCategory());
+        }
         if (courseDetails.getCreatedAt() != null) {
             updateCourse.setCreatedAt(courseDetails.getCreatedAt());
         }
 
-        courseRepository.save(updateCourse);
+        Course savedCourse = courseRepository.save(updateCourse);
 
-        return ResponseEntity.ok(updateCourse);
+        CourseDTO responseDTO = new CourseDTO(
+            savedCourse.getCourseId(),
+            savedCourse.getTitle(),
+            savedCourse.getDescription(),
+            savedCourse.getCategory(),
+            savedCourse.getCreatedAt()
+        );
+
+        return ResponseEntity.ok(responseDTO);
     }
 
     // build delete course REST API
